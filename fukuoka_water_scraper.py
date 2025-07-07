@@ -713,6 +713,8 @@ class FukuokaWaterScraper:
                                             logger.warning(f"Could not set single period '{output_period}': {e}")
                                     
                                     elif period_from or period_to:
+                                        current_to = Select(to_select).first_selected_option.text
+                                        
                                         if period_from:
                                             converted_from = self.convert_western_to_japanese_era(period_from)
                                             period_to_try = converted_from if converted_from else period_from
@@ -726,8 +728,13 @@ class FukuokaWaterScraper:
                                                 for option in Select(from_select).options:
                                                     logger.info(f"  - {option.text}")
                                         else:
-                                            current_from = Select(from_select).first_selected_option.text
-                                            logger.info(f"Using default start period: {current_from}")
+                                            try:
+                                                Select(from_select).select_by_visible_text(current_to)
+                                                logger.info(f"Set start period to default end period (most recent): {current_to}")
+                                            except Exception as e:
+                                                logger.warning(f"Could not set start period to default end period '{current_to}': {e}")
+                                                current_from = Select(from_select).first_selected_option.text
+                                                logger.info(f"Falling back to default start period: {current_from}")
                                         
                                         if period_to:
                                             converted_to = self.convert_western_to_japanese_era(period_to)
@@ -742,13 +749,18 @@ class FukuokaWaterScraper:
                                                 for option in Select(to_select).options:
                                                     logger.info(f"  - {option.text}")
                                         else:
-                                            current_to = Select(to_select).first_selected_option.text
                                             logger.info(f"Using default end period: {current_to}")
                                     
                                     else:
-                                        current_from = Select(from_select).first_selected_option.text
                                         current_to = Select(to_select).first_selected_option.text
-                                        logger.info(f"Using website default periods: {current_from} ～ {current_to}")
+                                        try:
+                                            Select(from_select).select_by_visible_text(current_to)
+                                            logger.info(f"Set start period to default end period (most recent): {current_to}")
+                                        except Exception as e:
+                                            logger.warning(f"Could not set start period to default end period '{current_to}': {e}")
+                                            current_from = Select(from_select).first_selected_option.text
+                                            logger.info(f"Falling back to default start period: {current_from}")
+                                        logger.info(f"Using default end period: {current_to}")
                                     
                                     time.sleep(1)
                                 else:
