@@ -8,6 +8,7 @@ import os
 import time
 import json
 import argparse
+import getpass
 from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -1268,11 +1269,25 @@ def main():
     email = args.email or os.environ.get('mailaddress')
     password = args.password or os.environ.get('password')
     
-    if not email or not password:
-        print("エラー: メールアドレスとパスワードが必要です")
-        print("コマンドライン引数 --email, --password または")
-        print("環境変数 mailaddress, password を設定してください")
-        return 1
+    if not email:
+        try:
+            email = input("メールアドレスを入力してください: ").strip()
+            if not email:
+                print("エラー: メールアドレスが入力されませんでした")
+                return 1
+        except (KeyboardInterrupt, EOFError):
+            print("\n処理が中断されました")
+            return 1
+    
+    if not password:
+        try:
+            password = getpass.getpass("パスワードを入力してください: ").strip()
+            if not password:
+                print("エラー: パスワードが入力されませんでした")
+                return 1
+        except (KeyboardInterrupt, EOFError):
+            print("\n処理が中断されました")
+            return 1
     
     if args.period and (args.period_from or args.period_to):
         print("エラー: --period と --period-from/--period-to は同時に指定できません")
