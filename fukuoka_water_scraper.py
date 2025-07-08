@@ -311,154 +311,6 @@ class FukuokaWaterScraper:
             logger.error(f"料金データページへの遷移中にエラーが発生しました: {e}")
             return False
     
-    def extract_billing_data(self):
-        """料金データの抽出"""
-        try:
-            logger.info("料金データを抽出しています...")
-            
-            time.sleep(3)
-            
-            billing_data = []
-            
-            try:
-                import re
-                page_source = self.driver.page_source
-                
-                billing_patterns = [
-                    (r"([0-9,]+)\s*円", "amount"),
-                    (r"([0-9,]+)\s*m³", "volume"),
-                    (r"(令和\d+年\d+月\d+日～令和\d+年\d+月\d+日)", "period"),
-                    (r"合計.*?([0-9,]+円)", "total_amount"),
-                    (r"水道料金.*?([0-9,]+円)", "water_fee"),
-                    (r"下水道使用料.*?([0-9,]+円)", "sewage_fee"),
-                    (r"水道使用水量.*?([0-9,]+\s*m³)", "water_usage"),
-                    (r"使用期間.*?(令和\d+年\d+月\d+日～令和\d+年\d+月\d+日)", "usage_period")
-                ]
-                
-                for pattern, field_type in billing_patterns:
-                    matches = re.findall(pattern, page_source, re.DOTALL)
-                    for match in matches:
-                        billing_data.append({
-                            "type": "regex_match",
-                            "field_type": field_type,
-                            "data": match.strip()
-                        })
-                        logger.info(f"Found {field_type}: {match.strip()}")
-                        
-            except Exception as e:
-                logger.warning(f"Regex extraction failed: {e}")
-            
-            try:
-                all_elements = self.driver.find_elements(By.XPATH, "//*[normalize-space(text())]")
-                
-                for element in all_elements:
-                    try:
-                        text = element.text.strip()
-                        if text and len(text) > 0 and len(text) < 100:
-                            billing_keywords = ["円", "m³", "合計", "料金", "使用量", "使用期間", "令和"]
-                            if any(keyword in text for keyword in billing_keywords):
-                                if any(char.isdigit() for char in text):
-                                    billing_data.append({
-                                        "type": "element_text",
-                                        "data": text
-                                    })
-                                    logger.info(f"Found billing element: {text}")
-                    except Exception as e:
-                        continue
-                        
-            except Exception as e:
-                logger.warning(f"Element text extraction failed: {e}")
-            
-            try:
-                billing_fields = [
-                    "合計", "水道料金", "下水道使用料", "水道使用水量", "使用期間"
-                ]
-                
-                for field_label in billing_fields:
-                    try:
-                        label_elements = self.driver.find_elements(By.XPATH, f"//*[contains(text(), '{field_label}')]")
-                        for label_element in label_elements:
-                            try:
-                                label_text = label_element.text.strip()
-                                if label_text:
-                                    billing_data.append({
-                                        "type": "field_label",
-                                        "field": field_label,
-                                        "data": label_text
-                                    })
-                                    logger.info(f"Found field label: {label_text}")
-                                
-                                try:
-                                    parent = label_element.find_element(By.XPATH, "./parent::*")
-                                    parent_text = parent.text.strip()
-                                    if parent_text and parent_text != label_text and len(parent_text) < 200:
-                                        billing_data.append({
-                                            "type": "field_with_value",
-                                            "field": field_label,
-                                            "data": parent_text
-                                        })
-                                        logger.info(f"Found field with value: {parent_text}")
-                                except:
-                                    pass
-                                    
-                            except Exception as e:
-                                logger.warning(f"Error processing label element for {field_label}: {e}")
-                    except Exception as e:
-                        logger.warning(f"Error finding label {field_label}: {e}")
-                        
-            except Exception as e:
-                logger.warning(f"Field label extraction failed: {e}")
-            
-            try:
-                usage_info_elements = self.driver.find_elements(By.XPATH, "//*[contains(text(), '最新のご利用情報')]")
-                if usage_info_elements:
-                    logger.info("Found '最新のご利用情報' section")
-                    for usage_element in usage_info_elements:
-                        try:
-                            for ancestor_level in range(1, 6):  # Try different ancestor levels
-                                try:
-                                    parent = usage_element.find_element(By.XPATH, f"./ancestor::*[{ancestor_level}]")
-                                    parent_text = parent.text.strip()
-                                    if parent_text and len(parent_text) > 20:
-                                        billing_data.append({
-                                            "type": "usage_info_section",
-                                            "ancestor_level": ancestor_level,
-                                            "data": parent_text
-                                        })
-                                        logger.info(f"Extracted usage info section (level {ancestor_level}): {parent_text[:100]}...")
-                                        break
-                                except:
-                                    continue
-                        except Exception as e:
-                            logger.warning(f"Error extracting usage info parent: {e}")
-            except Exception as e:
-                logger.warning(f"Error finding usage info section: {e}")
-            
-            try:
-                body_text = self.driver.find_element(By.TAG_NAME, "body").text
-                lines = body_text.split('\n')
-                
-                for line in lines:
-                    line = line.strip()
-                    if line and len(line) > 0 and len(line) < 100:
-                        billing_keywords = ["円", "m³", "合計", "料金", "使用量", "使用期間", "令和"]
-                        if any(keyword in line for keyword in billing_keywords):
-                            if any(char.isdigit() for char in line):
-                                billing_data.append({
-                                    "type": "body_text_line",
-                                    "data": line
-                                })
-                                logger.info(f"Found billing line: {line}")
-                                
-            except Exception as e:
-                logger.warning(f"Body text extraction failed: {e}")
-            
-            logger.info(f"Extracted {len(billing_data)} billing data items")
-            return billing_data
-            
-        except Exception as e:
-            logger.error(f"料金データの抽出中にエラーが発生しました: {e}")
-            return []
     
     def download_data(self, output_period=None, period_from=None, period_to=None, format_type="CSV"):
         """データのダウンロード処理
@@ -1023,24 +875,6 @@ class FukuokaWaterScraper:
             logger.error(f"ダウンロード待機中にエラーが発生しました: {e}")
             return []
     
-    def save_data_to_file(self, data, filename=None):
-        """抽出したデータをファイルに保存"""
-        try:
-            if not filename:
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                filename = f"fukuoka_water_data_{timestamp}.json"
-            
-            filepath = os.path.join(self.download_dir, filename)
-            
-            with open(filepath, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
-            
-            logger.info(f"データを保存しました: {filepath}")
-            return filepath
-            
-        except Exception as e:
-            logger.error(f"データの保存中にエラーが発生しました: {e}")
-            return None
     
     def check_billing_page_indicators(self):
         """Check if current page contains billing/usage data indicators"""
@@ -1124,9 +958,7 @@ class FukuokaWaterScraper:
         result = {
             "success": False,
             "login_success": False,
-            "data_extracted": False,
             "files_downloaded": False,
-            "extracted_data": [],
             "downloaded_files": [],
             "error_message": None
         }
@@ -1140,15 +972,6 @@ class FukuokaWaterScraper:
                 self.log_page_structure()
                 
                 if self.navigate_to_billing_data():
-                    
-                    extracted_data = self.extract_billing_data()
-                    if extracted_data:
-                        result["data_extracted"] = True
-                        result["extracted_data"] = extracted_data
-                        
-                        data_file = self.save_data_to_file(extracted_data)
-                        if data_file:
-                            result["downloaded_files"].append(data_file)
                     
                     download_result = self.download_data(output_period, period_from, period_to, format_type)
                     if download_result:
@@ -1181,7 +1004,7 @@ class FukuokaWaterScraper:
 def parse_arguments():
     """コマンドライン引数の解析"""
     parser = argparse.ArgumentParser(
-        description='福岡市水道局アプリから水道料金データをダウンロードするスクレイパー',
+        description='福岡市水道局アプリから水道料金ファイルをダウンロードするスクレイパー',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 使用例:
@@ -1288,7 +1111,6 @@ def main():
         print("実行結果:")
         print("=" * 60)
         print(f"ログイン成功: {'✓' if result['login_success'] else '✗'}")
-        print(f"データ抽出成功: {'✓' if result['data_extracted'] else '✗'}")
         print(f"ファイルダウンロード成功: {'✓' if result['files_downloaded'] else '✗'}")
         
         if result['downloaded_files']:
