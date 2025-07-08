@@ -1,15 +1,13 @@
 # 福岡市水道局アプリ - 水道料金データスクレイパー
 
-福岡市水道局のWebアプリケーション（https://www.suido-madoguchi-fukuoka.jp/#/login）から水道料金データを自動的にダウンロードするPythonスクリプトです。
+福岡市水道局のWebアプリケーション（https://www.suido-madoguchi-fukuoka.jp/#/login）から水道料金ファイルを自動的にダウンロードするPythonスクリプトです。
 
 ## 機能
 
 - 自動ログイン
-- 料金データの抽出とダウンロード
-- CSV/PDF形式での出力
+- CSV/PDF形式でのファイルダウンロード
 - 期間指定でのダウンロード
 - コマンドライン引数による柔軟な操作
-- データのJSONファイル保存
 - エラーハンドリング
 
 ## 必要な環境
@@ -170,8 +168,7 @@ result = scraper.run(
 )
 
 if result['success']:
-    print("データの取得に成功しました")
-    print(f"抽出されたデータ: {len(result['extracted_data'])}件")
+    print("ファイルのダウンロードに成功しました")
     print(f"ダウンロードファイル: {result['downloaded_files']}")
 else:
     print(f"エラー: {result['error_message']}")
@@ -182,10 +179,6 @@ else:
 ### ダウンロードファイル
 - **CSV形式**: `riyourireki_*.csv` - 利用履歴データ
 - **PDF形式**: `riyourireki_*.pdf` - 利用履歴PDF
-
-### JSONデータファイル
-- ファイル名: `fukuoka_water_data_YYYYMMDD_HHMMSS.json`
-- 内容: 抽出された料金データの詳細情報
 
 
 ## 設定オプション
@@ -247,7 +240,7 @@ tail -f fukuoka_water_scraper.log
 
 ## 使用例
 
-### 毎月の料金データを自動取得
+### 毎月の料金ファイルを自動取得
 ```bash
 #!/bin/bash
 # monthly_download.sh
@@ -255,19 +248,19 @@ tail -f fukuoka_water_scraper.log
 export mailaddress="your_email@example.com"
 export password="your_password"
 
-# CSV形式で最新データをダウンロード
+# CSV形式で最新ファイルをダウンロード
 python3 fukuoka_water_scraper.py --format CSV --output-dir ./monthly_data
 
 # PDF形式でも保存
 python3 fukuoka_water_scraper.py --format PDF --output-dir ./monthly_data
 ```
 
-### 特定期間のデータ取得
+### 特定期間のファイル取得
 ```bash
-# 2024年4月のデータを取得
+# 2024年4月のファイルを取得
 python3 fukuoka_water_scraper.py --period "2024年4月" --format CSV
 
-# 複数期間のデータを順次取得
+# 複数期間のファイルを順次取得
 for period in "2024年1月" "2024年2月" "2024年3月"; do
     python3 fukuoka_water_scraper.py --period "$period" --format CSV
     sleep 5  # サーバー負荷軽減のため待機
@@ -299,5 +292,5 @@ done
   - --period, --format オプション
   - 環境変数による認証情報設定
 - v0.1.0: 初回リリース
-  - 基本的なログイン・データ抽出機能
+  - 基本的なログイン・ファイルダウンロード機能
   - エラーハンドリング
