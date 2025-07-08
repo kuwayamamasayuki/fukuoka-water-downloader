@@ -10,7 +10,6 @@
 - 期間指定でのダウンロード
 - コマンドライン引数による柔軟な操作
 - データのJSONファイル保存
-- デバッグモード（スクリーンショット撮影）
 - エラーハンドリング
 
 ## 必要な環境
@@ -63,11 +62,8 @@ python3 fukuoka_water_scraper.py --period "2024年4月" --format CSV
 # カスタム出力ディレクトリを指定
 python3 fukuoka_water_scraper.py --output-dir ./my_downloads
 
-# デバッグモード（スクリーンショット有効）
-python3 fukuoka_water_scraper.py --debug
-
 # ブラウザを表示して実行（デバッグ用）
-python3 fukuoka_water_scraper.py --headful --debug
+python3 fukuoka_water_scraper.py --headful
 ```
 
 #### ヘルプ表示
@@ -86,7 +82,6 @@ python3 fukuoka_water_scraper.py --help
 | `--period-to` | | ダウンロード終了期間 | Webサイトのデフォルト値 |
 | `--format` | `-f` | 出力フォーマット（CSV/PDF） | CSV |
 | `--output-dir` | `-o` | ダウンロード先ディレクトリ | ./downloads |
-| `--debug` | `-d` | デバッグモード（スクリーンショット有効） | 無効 |
 | `--headful` | | ブラウザを表示して実行 | ヘッドレス |
 | `--help` | `-h` | ヘルプを表示 | |
 
@@ -152,7 +147,7 @@ export mailaddress="your_email@example.com"
 export password="your_password"
 
 # 設定後はメールアドレスとパスワードの指定不要
-python3 fukuoka_water_scraper.py --format PDF --debug
+python3 fukuoka_water_scraper.py --format PDF
 ```
 
 ### Pythonスクリプトとしての使用
@@ -163,8 +158,7 @@ from fukuoka_water_scraper import FukuokaWaterScraper
 # スクレイパーのインスタンスを作成
 scraper = FukuokaWaterScraper(
     headless=True,
-    download_dir="./downloads",
-    debug=False  # デバッグモード
+    download_dir="./downloads"
 )
 
 # スクレイピング実行
@@ -193,11 +187,6 @@ else:
 - ファイル名: `fukuoka_water_data_YYYYMMDD_HHMMSS.json`
 - 内容: 抽出された料金データの詳細情報
 
-### スクリーンショット（デバッグモード時のみ）
-- `after_login.png`: ログイン後のページ
-- `billing_page.png`: 料金ページ
-- `post_login_debug.png`: ログイン後のデバッグ情報
-- `after_download_click.png`: ダウンロード後の状態
 
 ## 設定オプション
 
@@ -205,7 +194,6 @@ else:
 
 - `headless` (bool): ヘッドレスモードで実行するかどうか（デフォルト: True）
 - `download_dir` (str): ダウンロードディレクトリのパス（デフォルト: "./downloads"）
-- `debug` (bool): デバッグモード（スクリーンショット取得有効）（デフォルト: False）
 
 ### runメソッドのパラメータ
 
@@ -242,16 +230,16 @@ else:
    - サイトがメンテナンス中でないか確認してください
 
 4. **ダウンロードが完了しない**
-   - デバッグモードで実行してスクリーンショットを確認してください
+   - ブラウザを表示して実行し、動作を確認してください
    ```bash
-   python3 fukuoka_water_scraper.py --debug --headful
+   python3 fukuoka_water_scraper.py --headful
    ```
 
 ### デバッグ方法
 
 ```bash
-# デバッグモードで詳細ログとスクリーンショットを取得
-python3 fukuoka_water_scraper.py --debug --headful
+# ブラウザを表示して詳細ログを確認
+python3 fukuoka_water_scraper.py --headful
 
 # ログファイルを確認
 tail -f fukuoka_water_scraper.log
@@ -295,7 +283,6 @@ done
 - このスクリプトは教育目的で作成されています
 - 利用規約を遵守してください
 - 過度なアクセスは避けてください
-- デバッグモード以外ではスクリーンショットは取得されません
 
 ## 更新履歴
 
@@ -309,10 +296,8 @@ done
 - v2.0.0: CLI機能追加
   - コマンドライン引数による柔軟な操作
   - --help/-h オプション
-  - --debug オプション（スクリーンショット制御）
   - --period, --format オプション
   - 環境変数による認証情報設定
 - v1.0.0: 初回リリース
   - 基本的なログイン・データ抽出機能
-  - スクリーンショット機能
   - エラーハンドリング

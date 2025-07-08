@@ -33,18 +33,16 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class FukuokaWaterScraper:
-    def __init__(self, headless=True, download_dir=None, debug=False):
+    def __init__(self, headless=True, download_dir=None):
         """
         スクレイパーの初期化
         
         Args:
             headless (bool): ヘッドレスモードで実行するかどうか
             download_dir (str): ダウンロードディレクトリのパス
-            debug (bool): デバッグモード（スクリーンショット取得有効）
         """
         self.headless = headless
         self.download_dir = download_dir or os.path.join(os.getcwd(), 'downloads')
-        self.debug = debug
         self.driver = None
         self.wait = None
         
@@ -231,8 +229,6 @@ class FukuokaWaterScraper:
             
             time.sleep(5)
             
-            self.take_screenshot("post_login_debug.png")
-            
             try:
                 logger.info("Looking for '料金' button on the left side...")
                 
@@ -247,7 +243,6 @@ class FukuokaWaterScraper:
                     current_url = self.driver.current_url
                     if 'waterPrice' in current_url:
                         logger.info(f"Successfully navigated to waterPrice page: {current_url}")
-                        self.take_screenshot("waterPrice_page.png")
                         return True
                     else:
                         logger.warning(f"Specific XPath click didn't navigate to waterPrice, current URL: {current_url}")
@@ -279,7 +274,6 @@ class FukuokaWaterScraper:
                                     current_url = self.driver.current_url
                                     if 'waterPrice' in current_url:
                                         logger.info(f"Successfully navigated to waterPrice page: {current_url}")
-                                        self.take_screenshot("waterPrice_page.png")
                                         return True
                                         
                                 except Exception as e:
@@ -303,7 +297,6 @@ class FukuokaWaterScraper:
                 current_url = self.driver.current_url
                 if 'waterPrice' in current_url:
                     logger.info(f"Successfully navigated to waterPrice page: {current_url}")
-                    self.take_screenshot("waterPrice_page.png")
                     return True
                 else:
                     logger.warning(f"Direct navigation failed, current URL: {current_url}")
@@ -669,9 +662,6 @@ class FukuokaWaterScraper:
                 if final_download_clicked:
                     logger.info("Download initiated, checking for additional steps...")
                     time.sleep(3)  # Wait for any additional UI to appear
-                    
-                    screenshot_path = self.take_screenshot("after_download_click.png")
-                    logger.info(f"Screenshot taken after download click: {screenshot_path}")
                     
                     try:
                         alert = self.driver.switch_to.alert
@@ -1115,24 +1105,6 @@ class FukuokaWaterScraper:
         except Exception as e:
             logger.warning(f"Error logging page structure: {e}")
 
-    def take_screenshot(self, filename=None):
-        """スクリーンショットを撮影（デバッグモード時のみ）"""
-        if not self.debug:
-            return None
-            
-        try:
-            if not filename:
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                filename = f"screenshot_{timestamp}.png"
-            
-            filepath = os.path.join(self.download_dir, filename)
-            self.driver.save_screenshot(filepath)
-            logger.info(f"スクリーンショットを保存しました: {filepath}")
-            return filepath
-            
-        except Exception as e:
-            logger.error(f"スクリーンショットの保存中にエラーが発生しました: {e}")
-            return None
     
     def run(self, email, password, output_period=None, period_from=None, period_to=None, format_type="CSV"):
         """
@@ -1156,7 +1128,6 @@ class FukuokaWaterScraper:
             "files_downloaded": False,
             "extracted_data": [],
             "downloaded_files": [],
-            "screenshots": [],
             "error_message": None
         }
         
@@ -1166,16 +1137,9 @@ class FukuokaWaterScraper:
             if self.login(email, password):
                 result["login_success"] = True
                 
-                screenshot_path = self.take_screenshot("after_login.png")
-                if screenshot_path:
-                    result["screenshots"].append(screenshot_path)
-                
                 self.log_page_structure()
                 
                 if self.navigate_to_billing_data():
-                    screenshot_path = self.take_screenshot("billing_page.png")
-                    if screenshot_path:
-                        result["screenshots"].append(screenshot_path)
                     
                     extracted_data = self.extract_billing_data()
                     if extracted_data:
@@ -1225,7 +1189,7 @@ def parse_arguments():
   %(prog)s --email user@example.com --password mypass --format PDF
   %(prog)s --email user@example.com --password mypass --period "2024年4月" --format CSV
   %(prog)s --email user@example.com --password mypass --period-from "2024年1月" --period-to "2025年3月" --format CSV
-  %(prog)s --email user@example.com --password mypass --debug --output-dir ./downloads
+  %(prog)s --email user@example.com --password mypass --output-dir ./downloads
   
 環境変数での認証情報指定:
   export mailaddress="user@example.com"
@@ -1253,9 +1217,6 @@ def parse_arguments():
     parser.add_argument('--output-dir', '-o', 
                        help='ダウンロード先ディレクトリ（デフォルト: ./downloads）')
     
-    parser.add_argument('--debug', '-d', 
-                       action='store_true',
-                       help='デバッグモード（スクリーンショット取得有効）')
     parser.add_argument('--headful', 
                        action='store_true',
                        help='ブラウザを表示して実行（デバッグ用）')
@@ -1306,14 +1267,12 @@ def main():
     else:
         print(f"出力期間: デフォルト期間")
     print(f"出力ディレクトリ: {args.output_dir or './downloads'}")
-    print(f"デバッグモード: {'有効' if args.debug else '無効'}")
     print("=" * 60)
     
     try:
         scraper = FukuokaWaterScraper(
             headless=not args.headful,
-            download_dir=args.output_dir,
-            debug=args.debug
+            download_dir=args.output_dir
         )
         
         result = scraper.run(
@@ -1342,10 +1301,6 @@ def main():
                 else:
                     print(f"  ✗ {file_path} (ファイルが見つかりません)")
         
-        if result['screenshots'] and args.debug:
-            print(f"\n撮影されたスクリーンショット ({len(result['screenshots'])} 件):")
-            for screenshot_path in result['screenshots']:
-                print(f"  - {screenshot_path}")
         
         if result['error_message']:
             print(f"\nエラー: {result['error_message']}")
