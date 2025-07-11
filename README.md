@@ -279,9 +279,7 @@ done
 
 ## WSL(Ubuntu 24.04.2 LTS)についての注意
 
-
-原因は必要なライブラリが揃っていないことでしたので、
-次のようなエラーとなる事象が確認されました。
+WSL(Ubuntu 24.04.2 LTS)で、次のようなエラーとなる事象が確認されました。
 ```
 selenium.common.exceptions.WebDriverException: Message: Service /home/masayuki/.cache/selenium/chromedriver/linux64/138.0.7204.94/chromedriver unexpectedly exited. Status code was: 127
 ```
