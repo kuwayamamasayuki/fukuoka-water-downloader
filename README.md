@@ -277,6 +277,22 @@ done
 - 利用規約を遵守してください
 - 過度なアクセスは避けてください
 
+## WSL(Ubuntu 24.04.2 LTS)についての注意
+
+
+原因は必要なライブラリが揃っていないことでしたので、
+次のようなエラーとなる事象が確認されました。
+```
+selenium.common.exceptions.WebDriverException: Message: Service /home/masayuki/.cache/selenium/chromedriver/linux64/138.0.7204.94/chromedriver unexpectedly exited. Status code was: 127
+```
+
+原因は必要なライブラリが揃っていないことでしたので、次のようにして解決しました。
+```bash
+sudo apt install libnspr4 libnss3 libasound2-dev
+```
+
+
+
 ## 更新履歴
 
 - v0.5.0: Devinが作成していた変な変更履歴を修正した。
