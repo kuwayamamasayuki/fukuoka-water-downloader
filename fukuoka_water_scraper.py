@@ -875,42 +875,7 @@ class FukuokaWaterScraper:
             logger.error(f"ダウンロード待機中にエラーが発生しました: {e}")
             return []
     
-    
-    def check_billing_page_indicators(self):
-        """Check if current page contains billing/usage data indicators"""
-        try:
-            page_source = self.driver.page_source.lower()
-            current_url = self.driver.current_url.lower()
-            
-            url_indicators = ['billing', 'usage', 'ryokin', 'shiyo', 'meisai', 'rireki']
-            if any(indicator in current_url for indicator in url_indicators):
-                return True
-            
-            content_indicators = [
-                '料金', '使用量', '請求', '明細', '水道料金', 'ご使用量', 
-                '請求金額', '上下水道', '検針', '使用実績', 'm³', '円'
-            ]
-            
-            indicator_count = sum(1 for indicator in content_indicators if indicator in page_source)
-            
-            if indicator_count >= 3:
-                logger.info(f"Found {indicator_count} billing indicators on current page")
-                return True
-            
-            tables = self.driver.find_elements(By.TAG_NAME, "table")
-            if tables:
-                for table in tables:
-                    table_text = table.text.lower()
-                    if any(indicator in table_text for indicator in content_indicators):
-                        logger.info("Found billing data in table structure")
-                        return True
-            
-            return False
-            
-        except Exception as e:
-            logger.warning(f"Error checking billing page indicators: {e}")
-            return False
-    
+   
     def log_page_structure(self):
         """Log current page structure for debugging"""
         try:
