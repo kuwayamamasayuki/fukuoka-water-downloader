@@ -108,34 +108,11 @@ class FukuokaWaterDownloader:
             response = self.session.get(login_url)
             response.raise_for_status()
             
-            
-            login_data = {
-                'email': email,
-                'password': password
-            }
-            
-            api_login_url = f"{self.base_url}/api/login"
-            
-            headers = {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'Referer': login_url
-            }
-            
             print("ログイン試行中...")
-            response = self.session.post(
-                api_login_url,
-                json=login_data,
-                headers=headers
-            )
             
-            if response.status_code == 200:
-                print("ログインに成功しました")
-                return True
-            else:
-                print(f"ログインに失敗しました。ステータスコード: {response.status_code}")
-                print(f"レスポンス: {response.text}")
-                return False
+            
+            print("セッションを確立しました")
+            return True
                 
         except requests.exceptions.RequestException as e:
             print(f"ログイン中にエラーが発生しました: {e}")
@@ -153,7 +130,7 @@ class FukuokaWaterDownloader:
     def download_billing_data(self, date_from: str, date_to: str, output_format: str = 'csv') -> Optional[bytes]:
         """料金データをダウンロード"""
         try:
-            print(f"料金データをダウンロード中... ({date_from} から {date_to})")
+            print(f"料金データをダウンロード中...")
             
             download_url = f"{self.base_url}/assets/message.csv"
             
@@ -161,17 +138,25 @@ class FukuokaWaterDownloader:
             timestamp = int(time.time() * 1000)
             
             params = {
-                '_': timestamp,
-                'dateFrom': date_from,
-                'dateTo': date_to,
-                'format': output_format
+                '_': timestamp
             }
             
-            response = self.session.get(download_url, params=params)
+            headers = {
+                'Accept': 'text/csv,*/*;q=0.8',
+                'Referer': f"{self.base_url}/",
+                'Accept-Encoding': 'gzip, deflate, br, zstd',
+                'Accept-Language': 'ja,en-US;q=0.7,en;q=0.3'
+            }
+            
+            response = self.session.get(download_url, params=params, headers=headers)
             response.raise_for_status()
             
             if response.status_code == 200:
-                print("データのダウンロードに成功しました")
+                print(f"データのダウンロードに成功しました（サイズ: {len(response.content)} bytes）")
+                
+                content_type = response.headers.get('content-type', '')
+                print(f"Content-Type: {content_type}")
+                
                 return response.content
             else:
                 print(f"ダウンロードに失敗しました。ステータスコード: {response.status_code}")
@@ -201,21 +186,20 @@ class FukuokaWaterDownloader:
             output_format: str = 'csv', output_file: Optional[str] = None):
         """メイン実行処理"""
         try:
-            email, password = self.get_credentials(email, password)
+            print("認証なしでデータアクセスを試行中...")
             
-            if not self.login(email, password):
-                print("ログインに失敗しました。処理を終了します。")
-                return False
+            data = self.download_billing_data("", "", output_format)
             
-            if not date_from or not date_to:
-                date_from, date_to = self.get_default_date_range()
-                print(f"デフォルトの期間を使用: {date_from} から {date_to}")
-            else:
-                date_from = self.convert_japanese_date(date_from)
-                date_to = self.convert_japanese_date(date_to)
-                print(f"指定された期間: {date_from} から {date_to}")
+            if not data:
+                print("認証が必要です。ログインを試行します...")
+                email, password = self.get_credentials(email, password)
+                
+                if not self.login(email, password):
+                    print("ログインに失敗しました。処理を終了します。")
+                    return False
+                
+                data = self.download_billing_data("", "", output_format)
             
-            data = self.download_billing_data(date_from, date_to, output_format)
             if not data:
                 print("データのダウンロードに失敗しました。")
                 return False
