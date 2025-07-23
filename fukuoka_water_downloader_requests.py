@@ -65,23 +65,28 @@ class FukuokaWaterDownloader:
         })
 
     def convert_date_to_kenyin_format(self, date_str: str) -> str:
-        """日付を検針分形式（kenYm）に変換"""
+        """日付を検針分形式（kenYm）に変換 - 全角数字を使用"""
+        def to_fullwidth_number(num):
+            """半角数字を全角数字に変換"""
+            fullwidth_digits = "０１２３４５６７８９"
+            return ''.join(fullwidth_digits[int(d)] for d in str(num))
+        
         if not date_str:
             today = datetime.now()
             reiwa_year = today.year - 2018
-            return f"令和　{reiwa_year}年　{today.month}月検針分"
+            return f"令和　{to_fullwidth_number(reiwa_year)}年　{to_fullwidth_number(today.month)}月検針分"
         
         reiwa_match = re.match(r'令和(\d+)年(\d+)月', date_str)
         if reiwa_match:
             year = int(reiwa_match.group(1))
             month = int(reiwa_match.group(2))
-            return f"令和　{year}年　{month}月検針分"
+            return f"令和　{to_fullwidth_number(year)}年　{to_fullwidth_number(month)}月検針分"
         
         heisei_match = re.match(r'平成(\d+)年(\d+)月', date_str)
         if heisei_match:
             year = int(heisei_match.group(1))
             month = int(heisei_match.group(2))
-            return f"平成　{year}年　{month}月検針分"
+            return f"平成　{to_fullwidth_number(year)}年　{to_fullwidth_number(month)}月検針分"
         
         western_match = re.match(r'(\d{4})-(\d{1,2})', date_str)
         if western_match:
@@ -89,10 +94,10 @@ class FukuokaWaterDownloader:
             month = int(western_match.group(2))
             reiwa_year = year - 2018
             if reiwa_year > 0:
-                return f"令和　{reiwa_year}年　{month}月検針分"
+                return f"令和　{to_fullwidth_number(reiwa_year)}年　{to_fullwidth_number(month)}月検針分"
             else:
                 heisei_year = year - 1988
-                return f"平成　{heisei_year}年　{month}月検針分"
+                return f"平成　{to_fullwidth_number(heisei_year)}年　{to_fullwidth_number(month)}月検針分"
         
         western_match2 = re.match(r'(\d{4})年(\d{1,2})月', date_str)
         if western_match2:
@@ -100,10 +105,10 @@ class FukuokaWaterDownloader:
             month = int(western_match2.group(2))
             reiwa_year = year - 2018
             if reiwa_year > 0:
-                return f"令和　{reiwa_year}年　{month}月検針分"
+                return f"令和　{to_fullwidth_number(reiwa_year)}年　{to_fullwidth_number(month)}月検針分"
             else:
                 heisei_year = year - 1988
-                return f"平成　{heisei_year}年　{month}月検針分"
+                return f"平成　{to_fullwidth_number(heisei_year)}年　{to_fullwidth_number(month)}月検針分"
         
         date_match = re.match(r'(\d{4})-(\d{1,2})-(\d{1,2})', date_str)
         if date_match:
@@ -111,10 +116,10 @@ class FukuokaWaterDownloader:
             month = int(date_match.group(2))
             reiwa_year = year - 2018
             if reiwa_year > 0:
-                return f"令和　{reiwa_year}年　{month}月検針分"
+                return f"令和　{to_fullwidth_number(reiwa_year)}年　{to_fullwidth_number(month)}月検針分"
             else:
                 heisei_year = year - 1988
-                return f"平成　{heisei_year}年　{month}月検針分"
+                return f"平成　{to_fullwidth_number(heisei_year)}年　{to_fullwidth_number(month)}月検針分"
         
         raise ValueError(f"サポートされていない日付形式です: {date_str}")
 
