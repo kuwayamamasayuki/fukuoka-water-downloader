@@ -12,9 +12,11 @@ import base64
 import csv
 import getpass
 import json
+import logging
 import os
 import re
 import sys
+import urllib.parse
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, Tuple
 import requests
@@ -25,13 +27,17 @@ from urllib3.util.retry import Retry
 class FukuokaWaterDownloader:
     """福岡市水道局アプリからデータをダウンロードするクラス"""
     
-    def __init__(self):
+    def __init__(self, debug: bool = False, debug_log_file: str = None):
         self.session = requests.Session()
         self.base_url = "https://www.suido-madoguchi-fukuoka.jp"
         self.api_base_url = "https://api.suido-madoguchi-fukuoka.jp"
         self.jwt_token = None
         self.user_id = None
+        self.debug = debug
+        self.debug_log_file = debug_log_file
         self.setup_session()
+        if self.debug:
+            self.setup_debug_logging()
         
     def setup_session(self):
         """HTTPセッションの設定"""
@@ -112,6 +118,94 @@ class FukuokaWaterDownloader:
         
         raise ValueError(f"サポートされていない日付形式です: {date_str}")
 
+    def setup_debug_logging(self):
+        """デバッグログの設定"""
+        if self.debug_log_file:
+            logging.basicConfig(
+                level=logging.DEBUG,
+                format='%(message)s',
+                handlers=[
+                    logging.FileHandler(self.debug_log_file, encoding='utf-8'),
+                    logging.StreamHandler()
+                ]
+            )
+        else:
+            logging.basicConfig(level=logging.DEBUG, format='%(message)s')
+
+    def mask_email(self, email: str) -> str:
+        """メールアドレスの一部をマスク"""
+        if '@' in email:
+            local, domain = email.split('@', 1)
+            if len(local) > 3:
+                masked_local = local[:2] + '*' * (len(local) - 2)
+            else:
+                masked_local = local[0] + '*' * (len(local) - 1)
+            return f"{masked_local}@{domain}"
+        return email
+
+    def log_request(self, method: str, url: str, headers: dict = None, data: any = None):
+        """Log HTTP request details for debugging"""
+        if not self.debug:
+            return
+        
+        message = f"\n=== HTTP REQUEST ===\nMethod: {method}\nURL: {url}\n"
+        
+        if headers:
+            message += "Headers:\n"
+            for key, value in headers.items():
+                if key.lower() == 'authorization':
+                    message += f"  {key}: [HIDDEN]\n"
+                else:
+                    message += f"  {key}: {value}\n"
+        
+        if data:
+            message += "Request Body:\n"
+            if isinstance(data, dict):
+                masked_data = data.copy()
+                if 'password' in masked_data:
+                    masked_data['password'] = '[HIDDEN]'
+                if 'loginId' in masked_data:
+                    masked_data['loginId'] = self.mask_email(masked_data['loginId'])
+                message += f"  {json.dumps(masked_data, indent=2, ensure_ascii=False)}\n"
+            else:
+                message += f"  {data}\n"
+        message += "=" * 20
+        
+        if self.debug_log_file:
+            logging.debug(message)
+        else:
+            print(message)
+
+    def log_response(self, response: requests.Response):
+        """Log HTTP response details for debugging"""
+        if not self.debug:
+            return
+        
+        message = f"\n=== HTTP RESPONSE ===\nStatus Code: {response.status_code}\nURL: {response.url}\n"
+        
+        message += "Response Headers:\n"
+        for key, value in response.headers.items():
+            message += f"  {key}: {value}\n"
+        
+        message += "Response Body:\n"
+        try:
+            if response.headers.get('content-type', '').startswith('application/json'):
+                json_data = response.json()
+                message += f"  {json.dumps(json_data, indent=2, ensure_ascii=False)}\n"
+            else:
+                content = response.text[:500]
+                if len(response.text) > 500:
+                    content += "... (truncated)"
+                message += f"  {content}\n"
+        except Exception as e:
+            message += f"  Could not parse response: {e}\n"
+        message += "=" * 22
+        
+        if self.debug_log_file:
+            logging.debug(message)
+        else:
+            print(message)
+
     def get_credentials(self, email: Optional[str] = None, password: Optional[str] = None) -> Tuple[str, str]:
         """認証情報を取得"""
         if not email:
@@ -152,11 +246,15 @@ class FukuokaWaterDownloader:
                 'Content-Length': str(len(json.dumps(login_data)))
             }
             
+            self.log_request("POST", api_login_url, headers, login_data)
+            
             response = self.session.post(
                 api_login_url,
                 json=login_data,
                 headers=headers
             )
+            
+            self.log_response(response)
             
             if response.status_code == 200:
                 response_data = response.json()
@@ -171,8 +269,20 @@ class FukuokaWaterDownloader:
                         jwt_data = json.loads(decoded)
                         self.user_id = jwt_data.get('userId')
                         print(f"ユーザーID: {self.user_id}")
+                        if self.debug:
+                            masked_jwt_data = jwt_data.copy()
+                            if self.debug_log_file:
+                                logging.debug(f"JWT Payload: {json.dumps(masked_jwt_data, indent=2, ensure_ascii=False)}")
+                            else:
+                                print(f"JWT Payload: {json.dumps(masked_jwt_data, indent=2, ensure_ascii=False)}")
                     except Exception as e:
                         print(f"JWT解析エラー: {e}")
+                        if self.debug:
+                            error_msg = f"JWT解析詳細エラー: {str(e)}"
+                            if self.debug_log_file:
+                                logging.debug(error_msg)
+                            else:
+                                print(error_msg)
                     
                     return True
                 else:
@@ -185,6 +295,12 @@ class FukuokaWaterDownloader:
                 
         except requests.exceptions.RequestException as e:
             print(f"ログイン中にエラーが発生しました: {e}")
+            if self.debug:
+                error_msg = f"ログイン詳細エラー: {str(e)}"
+                if self.debug_log_file:
+                    logging.debug(error_msg)
+                else:
+                    print(error_msg)
             return False
 
     def get_default_date_range(self) -> Tuple[str, str]:
@@ -230,7 +346,9 @@ class FukuokaWaterDownloader:
             }
             
             print("ファイル作成要求中...")
+            self.log_request("POST", create_url, headers, create_data)
             response = self.session.post(create_url, json=create_data, headers=headers)
+            self.log_response(response)
             response.raise_for_status()
             
             if response.status_code != 200:
@@ -250,7 +368,9 @@ class FukuokaWaterDownloader:
             download_url_endpoint = f"{self.api_base_url}/user/file/download/paylog/{self.user_id}/{filename}"
             
             print("ダウンロードURL取得中...")
+            self.log_request("GET", download_url_endpoint, {'Authorization': self.jwt_token})
             response = self.session.get(download_url_endpoint, headers={'Authorization': self.jwt_token})
+            self.log_response(response)
             response.raise_for_status()
             
             if response.status_code != 200:
@@ -266,7 +386,9 @@ class FukuokaWaterDownloader:
                 signed_url = f"https://download.suido-madoguchi-fukuoka.jp/paylog/{self.user_id}/{filename}"
             
             print("実際のファイルをダウンロード中...")
+            self.log_request("GET", signed_url)
             response = self.session.get(signed_url)
+            self.log_response(response)
             response.raise_for_status()
             
             if response.status_code == 200:
@@ -282,6 +404,12 @@ class FukuokaWaterDownloader:
                 
         except requests.exceptions.RequestException as e:
             print(f"ダウンロード中にエラーが発生しました: {e}")
+            if self.debug:
+                error_msg = f"ダウンロード詳細エラー: {str(e)}"
+                if self.debug_log_file:
+                    logging.debug(error_msg)
+                else:
+                    print(error_msg)
             return None
 
     def save_data(self, data: bytes, filename: str, output_format: str):
@@ -359,6 +487,11 @@ def main():
   python fukuoka_water_downloader_requests.py --date-from "2023年1月" --date-to "2023年12月"
 
   python fukuoka_water_downloader_requests.py --format csv --output billing_data.csv
+
+  python fukuoka_water_downloader_requests.py --debug --email user@example.com --password mypassword
+  python fukuoka_water_downloader_requests.py -d -e user@example.com -p mypassword
+  
+  python fukuoka_water_downloader_requests.py --debug-log debug.log --email user@example.com --password mypassword
         """
     )
     
@@ -377,14 +510,17 @@ def main():
                        help='出力ファイル名（指定しない場合は自動生成）')
     parser.add_argument('--verbose', '-v', action='store_true',
                        help='詳細な出力を表示')
+    parser.add_argument('--debug', '-d', action='store_true',
+                       help='デバッグ情報を表示（HTTPリクエスト/レスポンスの詳細）')
+    parser.add_argument('--debug-log', 
+                       help='デバッグ情報をファイルに保存（ファイル名を指定）')
     
     args = parser.parse_args()
     
-    if args.verbose:
-        import logging
-        logging.basicConfig(level=logging.DEBUG)
+    debug_enabled = args.verbose or args.debug or args.debug_log
+    debug_log_file = args.debug_log if args.debug_log else None
     
-    downloader = FukuokaWaterDownloader()
+    downloader = FukuokaWaterDownloader(debug=debug_enabled, debug_log_file=debug_log_file)
     success = downloader.run(
         email=args.email,
         password=args.password,
