@@ -8,12 +8,13 @@ This script automatically downloads billing data from Fukuoka City Water Bureau 
 """
 
 import argparse
-import getpass
-import os
-import sys
-import re
-import json
+import base64
 import csv
+import getpass
+import json
+import os
+import re
+import sys
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, Tuple
 import requests
@@ -27,6 +28,9 @@ class FukuokaWaterDownloader:
     def __init__(self):
         self.session = requests.Session()
         self.base_url = "https://www.suido-madoguchi-fukuoka.jp"
+        self.api_base_url = "https://api.suido-madoguchi-fukuoka.jp"
+        self.jwt_token = None
+        self.user_id = None
         self.setup_session()
         
     def setup_session(self):
@@ -41,44 +45,70 @@ class FukuokaWaterDownloader:
         self.session.mount("https://", adapter)
         
         self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
+            'Accept': 'application/json, text/plain, */*',
             'Accept-Language': 'ja,en-US;q=0.7,en;q=0.3',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'DNT': '1',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
+            'Accept-Encoding': 'gzip, deflate, br, zstd',
+            'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
+            'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-site',
+            'Priority': 'u=0',
+            'Te': 'trailers'
         })
 
-    def convert_japanese_date(self, date_str: str) -> str:
-        """和暦を西暦に変換"""
-        reiwa_match = re.match(r'令和(\d+)年(\d+)月(\d+)日', date_str)
+    def convert_date_to_kenyin_format(self, date_str: str) -> str:
+        """日付を検針分形式（kenYm）に変換"""
+        if not date_str:
+            today = datetime.now()
+            reiwa_year = today.year - 2018
+            return f"令和　{reiwa_year}年　{today.month}月検針分"
+        
+        reiwa_match = re.match(r'令和(\d+)年(\d+)月', date_str)
         if reiwa_match:
-            year = int(reiwa_match.group(1)) + 2018  # 令和1年 = 2019年
+            year = int(reiwa_match.group(1))
             month = int(reiwa_match.group(2))
-            day = int(reiwa_match.group(3))
-            return f"{year}-{month:02d}-{day:02d}"
+            return f"令和　{year}年　{month}月検針分"
         
-        heisei_match = re.match(r'平成(\d+)年(\d+)月(\d+)日', date_str)
+        heisei_match = re.match(r'平成(\d+)年(\d+)月', date_str)
         if heisei_match:
-            year = int(heisei_match.group(1)) + 1988  # 平成1年 = 1989年
+            year = int(heisei_match.group(1))
             month = int(heisei_match.group(2))
-            day = int(heisei_match.group(3))
-            return f"{year}-{month:02d}-{day:02d}"
+            return f"平成　{year}年　{month}月検針分"
         
-        western_match = re.match(r'(\d{4})-(\d{1,2})-(\d{1,2})', date_str)
+        western_match = re.match(r'(\d{4})-(\d{1,2})', date_str)
         if western_match:
             year = int(western_match.group(1))
             month = int(western_match.group(2))
-            day = int(western_match.group(3))
-            return f"{year}-{month:02d}-{day:02d}"
+            reiwa_year = year - 2018
+            if reiwa_year > 0:
+                return f"令和　{reiwa_year}年　{month}月検針分"
+            else:
+                heisei_year = year - 1988
+                return f"平成　{heisei_year}年　{month}月検針分"
         
-        western_match2 = re.match(r'(\d{4})年(\d{1,2})月(\d{1,2})日', date_str)
+        western_match2 = re.match(r'(\d{4})年(\d{1,2})月', date_str)
         if western_match2:
             year = int(western_match2.group(1))
             month = int(western_match2.group(2))
-            day = int(western_match2.group(3))
-            return f"{year}-{month:02d}-{day:02d}"
+            reiwa_year = year - 2018
+            if reiwa_year > 0:
+                return f"令和　{reiwa_year}年　{month}月検針分"
+            else:
+                heisei_year = year - 1988
+                return f"平成　{heisei_year}年　{month}月検針分"
+        
+        date_match = re.match(r'(\d{4})-(\d{1,2})-(\d{1,2})', date_str)
+        if date_match:
+            year = int(date_match.group(1))
+            month = int(date_match.group(2))
+            reiwa_year = year - 2018
+            if reiwa_year > 0:
+                return f"令和　{reiwa_year}年　{month}月検針分"
+            else:
+                heisei_year = year - 1988
+                return f"平成　{heisei_year}年　{month}月検針分"
         
         raise ValueError(f"サポートされていない日付形式です: {date_str}")
 
@@ -110,9 +140,48 @@ class FukuokaWaterDownloader:
             
             print("ログイン試行中...")
             
+            api_login_url = f"{self.api_base_url}/user/auth/login"
             
-            print("セッションを確立しました")
-            return True
+            login_data = {
+                "loginId": email,
+                "password": password
+            }
+            
+            headers = {
+                'Content-Type': 'application/json;charset=utf-8',
+                'Content-Length': str(len(json.dumps(login_data)))
+            }
+            
+            response = self.session.post(
+                api_login_url,
+                json=login_data,
+                headers=headers
+            )
+            
+            if response.status_code == 200:
+                response_data = response.json()
+                if 'token' in response_data:
+                    self.jwt_token = response_data['token']
+                    print("ログインに成功しました")
+                    
+                    try:
+                        payload = self.jwt_token.split('.')[1]
+                        payload += '=' * (4 - len(payload) % 4)
+                        decoded = base64.b64decode(payload)
+                        jwt_data = json.loads(decoded)
+                        self.user_id = jwt_data.get('userId')
+                        print(f"ユーザーID: {self.user_id}")
+                    except Exception as e:
+                        print(f"JWT解析エラー: {e}")
+                    
+                    return True
+                else:
+                    print("認証トークンが取得できませんでした")
+                    return False
+            else:
+                print(f"ログインに失敗しました。ステータスコード: {response.status_code}")
+                print(f"レスポンス: {response.text}")
+                return False
                 
         except requests.exceptions.RequestException as e:
             print(f"ログイン中にエラーが発生しました: {e}")
@@ -130,25 +199,74 @@ class FukuokaWaterDownloader:
     def download_billing_data(self, date_from: str, date_to: str, output_format: str = 'csv') -> Optional[bytes]:
         """料金データをダウンロード"""
         try:
+            if not self.jwt_token or not self.user_id:
+                print("認証が必要です")
+                return None
+            
             print(f"料金データをダウンロード中...")
             
-            download_url = f"{self.base_url}/assets/message.csv"
+            ken_ym_from = self.convert_date_to_kenyin_format(date_from)
+            ken_ym_to = self.convert_date_to_kenyin_format(date_to)
             
-            import time
-            timestamp = int(time.time() * 1000)
+            if not date_from and not date_to:
+                ken_ym_from = ken_ym_to = self.convert_date_to_kenyin_format("")
             
-            params = {
-                '_': timestamp
+            print(f"期間: {ken_ym_from} から {ken_ym_to}")
+            
+            create_url = f"{self.api_base_url}/user/file/create/payment/log/{self.user_id}"
+            
+            format_type = "2" if output_format.lower() == 'csv' else "1"  # CSV=2, PDF=1
+            
+            create_data = {
+                "formatType": format_type,
+                "kenYmFrom": ken_ym_from,
+                "kenYmTo": ken_ym_to
             }
             
             headers = {
-                'Accept': 'text/csv,*/*;q=0.8',
-                'Referer': f"{self.base_url}/",
-                'Accept-Encoding': 'gzip, deflate, br, zstd',
-                'Accept-Language': 'ja,en-US;q=0.7,en;q=0.3'
+                'Content-Type': 'application/json;charset=utf-8',
+                'Authorization': self.jwt_token,
+                'Content-Length': str(len(json.dumps(create_data)))
             }
             
-            response = self.session.get(download_url, params=params, headers=headers)
+            print("ファイル作成要求中...")
+            response = self.session.post(create_url, json=create_data, headers=headers)
+            response.raise_for_status()
+            
+            if response.status_code != 200:
+                print(f"ファイル作成に失敗しました。ステータスコード: {response.status_code}")
+                return None
+            
+            create_result = response.json()
+            print(f"ファイル作成結果: {create_result}")
+            
+            if 'filename' in create_result:
+                filename = create_result['filename']
+            else:
+                import time
+                timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+                filename = f"riyourireki_{self.user_id.replace('000', '3-0-').replace('0', '-0-')}-{timestamp}.csv"
+            
+            download_url_endpoint = f"{self.api_base_url}/user/file/download/paylog/{self.user_id}/{filename}"
+            
+            print("ダウンロードURL取得中...")
+            response = self.session.get(download_url_endpoint, headers={'Authorization': self.jwt_token})
+            response.raise_for_status()
+            
+            if response.status_code != 200:
+                print(f"ダウンロードURL取得に失敗しました。ステータスコード: {response.status_code}")
+                return None
+            
+            download_info = response.json()
+            print(f"ダウンロード情報: {download_info}")
+            
+            if 'downloadUrl' in download_info:
+                signed_url = download_info['downloadUrl']
+            else:
+                signed_url = f"https://download.suido-madoguchi-fukuoka.jp/paylog/{self.user_id}/{filename}"
+            
+            print("実際のファイルをダウンロード中...")
+            response = self.session.get(signed_url)
             response.raise_for_status()
             
             if response.status_code == 200:
@@ -186,19 +304,21 @@ class FukuokaWaterDownloader:
             output_format: str = 'csv', output_file: Optional[str] = None):
         """メイン実行処理"""
         try:
-            print("認証なしでデータアクセスを試行中...")
+            email, password = self.get_credentials(email, password)
             
-            data = self.download_billing_data("", "", output_format)
+            if not self.login(email, password):
+                print("ログインに失敗しました。処理を終了します。")
+                return False
             
-            if not data:
-                print("認証が必要です。ログインを試行します...")
-                email, password = self.get_credentials(email, password)
-                
-                if not self.login(email, password):
-                    print("ログインに失敗しました。処理を終了します。")
-                    return False
-                
-                data = self.download_billing_data("", "", output_format)
+            if not date_from and not date_to:
+                print("デフォルトの期間を使用: 最新のデータのみ")
+            else:
+                if date_from:
+                    print(f"開始期間: {date_from}")
+                if date_to:
+                    print(f"終了期間: {date_to}")
+            
+            data = self.download_billing_data(date_from, date_to, output_format)
             
             if not data:
                 print("データのダウンロードに失敗しました。")
@@ -225,19 +345,20 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 使用例:
-  python fukuoka_water_downloader.py
+  python fukuoka_water_downloader_requests.py
 
-  python fukuoka_water_downloader.py --email user@example.com --password mypassword
+  python fukuoka_water_downloader_requests.py --email user@example.com --password mypassword
 
   export FUKUOKA_WATER_EMAIL=user@example.com
   export FUKUOKA_WATER_PASSWORD=mypassword
-  python fukuoka_water_downloader.py
+  python fukuoka_water_downloader_requests.py
 
-  python fukuoka_water_downloader.py --date-from "令和5年1月1日" --date-to "令和5年12月31日"
+  python fukuoka_water_downloader_requests.py --date-from "令和5年1月" --date-to "令和5年12月"
 
-  python fukuoka_water_downloader.py --date-from "2023-01-01" --date-to "2023-12-31"
+  python fukuoka_water_downloader_requests.py --date-from "2023-01" --date-to "2023-12"
+  python fukuoka_water_downloader_requests.py --date-from "2023年1月" --date-to "2023年12月"
 
-  python fukuoka_water_downloader.py --format json --output billing_data.json
+  python fukuoka_water_downloader_requests.py --format csv --output billing_data.csv
         """
     )
     
@@ -246,11 +367,11 @@ def main():
     parser.add_argument('--password', '-p',
                        help='ログイン用パスワード（環境変数 FUKUOKA_WATER_PASSWORD でも指定可能）')
     parser.add_argument('--date-from', '--from',
-                       help='開始日（例: "令和5年1月1日" または "2023-01-01"）')
+                       help='開始期間（例: "令和5年1月", "2023-01", "2023年1月"）')
     parser.add_argument('--date-to', '--to',
-                       help='終了日（例: "令和5年12月31日" または "2023-12-31"）')
+                       help='終了期間（例: "令和5年12月", "2023-12", "2023年12月"）')
     parser.add_argument('--format', '-f', default='csv',
-                       choices=['csv', 'json', 'xml'],
+                       choices=['csv', 'pdf'],
                        help='出力形式（デフォルト: csv）')
     parser.add_argument('--output', '-o',
                        help='出力ファイル名（指定しない場合は自動生成）')
