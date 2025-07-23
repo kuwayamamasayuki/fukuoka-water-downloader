@@ -342,6 +342,9 @@ class FukuokaWaterDownloader:
             headers = {
                 'Content-Type': 'application/json;charset=utf-8',
                 'Authorization': self.jwt_token,
+                'Accept': 'application/json, text/plain, */*',
+                'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
+                'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
                 'Content-Length': str(len(json.dumps(create_data)))
             }
             
@@ -358,6 +361,13 @@ class FukuokaWaterDownloader:
             create_result = response.json()
             print(f"ファイル作成結果: {create_result}")
             
+            if create_result.get('result') == '27300':
+                print("エラー 27300: ファイル作成に失敗しました。認証またはパラメータの問題の可能性があります。")
+                return None
+            elif create_result.get('result') != '00000':
+                print(f"予期しないレスポンス: {create_result}")
+                return None
+            
             if 'filename' in create_result:
                 filename = create_result['filename']
             else:
@@ -367,9 +377,16 @@ class FukuokaWaterDownloader:
             
             download_url_endpoint = f"{self.api_base_url}/user/file/download/paylog/{self.user_id}/{filename}"
             
+            download_headers = {
+                'Authorization': self.jwt_token,
+                'Accept': 'application/json, text/plain, */*',
+                'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
+                'Referer': 'https://www.suido-madoguchi-fukuoka.jp/'
+            }
+            
             print("ダウンロードURL取得中...")
-            self.log_request("GET", download_url_endpoint, {'Authorization': self.jwt_token})
-            response = self.session.get(download_url_endpoint, headers={'Authorization': self.jwt_token})
+            self.log_request("GET", download_url_endpoint, download_headers)
+            response = self.session.get(download_url_endpoint, headers=download_headers)
             self.log_response(response)
             response.raise_for_status()
             
@@ -379,6 +396,13 @@ class FukuokaWaterDownloader:
             
             download_info = response.json()
             print(f"ダウンロード情報: {download_info}")
+            
+            if download_info.get('result') == '21801':
+                print("エラー 21801: ダウンロードURL取得に失敗しました。認証またはファイル作成の問題の可能性があります。")
+                return None
+            elif download_info.get('result') != '00000':
+                print(f"予期しないレスポンス: {download_info}")
+                return None
             
             if 'downloadUrl' in download_info:
                 signed_url = download_info['downloadUrl']
