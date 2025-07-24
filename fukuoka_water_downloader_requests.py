@@ -209,8 +209,6 @@ class FukuokaWaterDownloader:
                 'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
                 'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
-                ':authority': 'api.suido-madoguchi-fukuoka.jp',
-                ':scheme': 'https',
                 'accept': '*/*',
                 'accept-language': 'ja,en-US;q=0.7,en;q=0.3',
                 'accept-encoding': 'gzip, deflate, br, zstd',
@@ -393,8 +391,6 @@ class FukuokaWaterDownloader:
                 'Content-Type': 'application/json;charset=utf-8',
                 'Authorization': self.jwt_token,
                 'Content-Length': str(len(json.dumps(create_data))),
-                ':authority': 'api.suido-madoguchi-fukuoka.jp',
-                ':scheme': 'https',
                 'accept': 'application/json, text/plain, */*',
                 'accept-language': 'ja,en-US;q=0.7,en;q=0.3',
                 'accept-encoding': 'gzip, deflate, br, zstd',
@@ -443,8 +439,6 @@ class FukuokaWaterDownloader:
             
             download_headers = {
                 'Authorization': self.jwt_token,
-                ':authority': 'api.suido-madoguchi-fukuoka.jp',
-                ':scheme': 'https',
                 'accept': 'application/json, text/plain, */*',
                 'accept-language': 'ja,en-US;q=0.7,en;q=0.3',
                 'accept-encoding': 'gzip, deflate, br, zstd',
