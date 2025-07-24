@@ -348,8 +348,12 @@ class FukuokaWaterDownloader:
                 'Content-Type': 'application/json;charset=utf-8',
                 'Authorization': self.jwt_token,
                 'Accept': 'application/json, text/plain, */*',
+                'Accept-Language': 'ja,en-US;q=0.7,en;q=0.3',
+                'Accept-Encoding': 'gzip, deflate, br, zstd',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
                 'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
                 'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
+                'Priority': 'u=0',
                 'Content-Length': str(len(json.dumps(create_data)))
             }
             
@@ -385,8 +389,12 @@ class FukuokaWaterDownloader:
             download_headers = {
                 'Authorization': self.jwt_token,
                 'Accept': 'application/json, text/plain, */*',
+                'Accept-Language': 'ja,en-US;q=0.7,en;q=0.3',
+                'Accept-Encoding': 'gzip, deflate, br, zstd',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
                 'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
-                'Referer': 'https://www.suido-madoguchi-fukuoka.jp/'
+                'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
+                'Priority': 'u=0'
             }
             
             print("ダウンロードURL取得中...")
