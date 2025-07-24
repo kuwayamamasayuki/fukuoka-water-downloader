@@ -51,17 +51,7 @@ class FukuokaWaterDownloader:
         self.session.mount("https://", adapter)
         
         self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
-            'Accept': 'application/json, text/plain, */*',
-            'Accept-Language': 'ja,en-US;q=0.7,en;q=0.3',
-            'Accept-Encoding': 'gzip, deflate, br, zstd',
-            'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
-            'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-site',
-            'Priority': 'u=0',
-            'Te': 'trailers'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0'
         })
 
     def convert_date_to_kenyin_format(self, date_str: str) -> str:
@@ -347,16 +337,6 @@ class FukuokaWaterDownloader:
             headers = {
                 'Content-Type': 'application/json;charset=utf-8',
                 'Authorization': self.jwt_token,
-                'Accept': 'application/json, text/plain, */*',
-                'Accept-Language': 'ja,en-US;q=0.7,en;q=0.3',
-                'Accept-Encoding': 'gzip, deflate, br, zstd',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
-                'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
-                'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
-                'Priority': 'u=0',
-                'Sec-Fetch-Dest': 'empty',
-                'Sec-Fetch-Mode': 'cors',
-                'Sec-Fetch-Site': 'same-site',
                 'Content-Length': str(len(json.dumps(create_data)))
             }
             
@@ -390,17 +370,7 @@ class FukuokaWaterDownloader:
             download_url_endpoint = f"{self.api_base_url}/user/file/download/paylog/{self.user_id}/{filename}"
             
             download_headers = {
-                'Authorization': self.jwt_token,
-                'Accept': 'application/json, text/plain, */*',
-                'Accept-Language': 'ja,en-US;q=0.7,en;q=0.3',
-                'Accept-Encoding': 'gzip, deflate, br, zstd',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
-                'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
-                'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
-                'Priority': 'u=0',
-                'Sec-Fetch-Dest': 'empty',
-                'Sec-Fetch-Mode': 'cors',
-                'Sec-Fetch-Site': 'same-site'
+                'Authorization': self.jwt_token
             }
             
             print("ダウンロードURL取得中...")

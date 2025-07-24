@@ -21,10 +21,8 @@ def test_workflow_structure():
     assert downloader.jwt_token is None
     assert downloader.user_id is None
     
-    print("  ✓ Session configured with correct headers")
+    print("  ✓ Session configured with minimal CORS-compliant headers")
     assert 'User-Agent' in downloader.session.headers
-    assert 'Accept' in downloader.session.headers
-    assert downloader.session.headers['Accept'] == 'application/json, text/plain, */*'
     
     with patch('getpass.getpass', return_value='test_password'), \
          patch('builtins.input', return_value='test@example.com'):
