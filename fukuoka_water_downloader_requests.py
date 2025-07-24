@@ -200,6 +200,47 @@ class FukuokaWaterDownloader:
             logging.debug(message)
         else:
             print(message)
+    def send_cors_preflight(self, url: str, method: str, request_headers: list) -> bool:
+        """Send CORS preflight OPTIONS request before actual API call"""
+        try:
+            preflight_headers = {
+                'Access-Control-Request-Method': method,
+                'Access-Control-Request-Headers': ','.join(request_headers),
+                'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
+                'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0'
+            }
+            
+            print(f"CORS プリフライト送信中: {method} {url}")
+            self.log_request("OPTIONS", url, preflight_headers)
+            
+            response = self.session.options(url, headers=preflight_headers)
+            self.log_response(response)
+            
+            if response.status_code != 200:
+                print(f"CORS プリフライト失敗: {response.status_code}")
+                return False
+            
+            allowed_methods = response.headers.get('Access-Control-Allow-Methods', '')
+            allowed_headers = response.headers.get('Access-Control-Allow-Headers', '')
+            
+            if method.upper() not in allowed_methods.upper() and '*' not in allowed_methods:
+                print(f"サーバーが {method} メソッドを許可していません: {allowed_methods}")
+                return False
+            
+            for header in request_headers:
+                if header.lower() not in allowed_headers.lower() and '*' not in allowed_headers:
+                    print(f"サーバーが {header} ヘッダーを許可していません: {allowed_headers}")
+                    return False
+            
+            print("CORS プリフライト成功")
+            return True
+            
+        except Exception as e:
+            print(f"CORS プリフライトエラー: {e}")
+            return False
+
+
 
     def get_credentials(self, email: Optional[str] = None, password: Optional[str] = None) -> Tuple[str, str]:
         """認証情報を取得"""
@@ -326,6 +367,10 @@ class FukuokaWaterDownloader:
             
             create_url = f"{self.api_base_url}/user/file/create/payment/log/{self.user_id}"
             
+            if not self.send_cors_preflight(create_url, 'POST', ['authorization', 'content-type']):
+                print("CORS プリフライトに失敗しました。処理を中止します。")
+                return None
+            
             format_type = "2" if output_format.lower() == 'csv' else "1"  # CSV=2, PDF=1
             
             create_data = {
@@ -368,6 +413,10 @@ class FukuokaWaterDownloader:
                 filename = f"riyourireki_{self.user_id.replace('000', '3-0-').replace('0', '-0-')}-{timestamp}.csv"
             
             download_url_endpoint = f"{self.api_base_url}/user/file/download/paylog/{self.user_id}/{filename}"
+            
+            if not self.send_cors_preflight(download_url_endpoint, 'GET', ['authorization']):
+                print("CORS プリフライトに失敗しました。処理を中止します。")
+                return None
             
             download_headers = {
                 'Authorization': self.jwt_token
