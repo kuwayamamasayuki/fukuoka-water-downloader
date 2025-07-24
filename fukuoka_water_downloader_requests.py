@@ -354,6 +354,9 @@ class FukuokaWaterDownloader:
                 'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
                 'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
                 'Priority': 'u=0',
+                'Sec-Fetch-Dest': 'empty',
+                'Sec-Fetch-Mode': 'cors',
+                'Sec-Fetch-Site': 'same-site',
                 'Content-Length': str(len(json.dumps(create_data)))
             }
             
@@ -394,7 +397,10 @@ class FukuokaWaterDownloader:
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
                 'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
                 'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
-                'Priority': 'u=0'
+                'Priority': 'u=0',
+                'Sec-Fetch-Dest': 'empty',
+                'Sec-Fetch-Mode': 'cors',
+                'Sec-Fetch-Site': 'same-site'
             }
             
             print("ダウンロードURL取得中...")
