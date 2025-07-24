@@ -208,7 +208,12 @@ class FukuokaWaterDownloader:
                 'Access-Control-Request-Headers': ','.join(request_headers),
                 'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
                 'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
+                'Authority': 'api.suido-madoguchi-fukuoka.jp',
+                'Scheme': 'https',
+                'Sec-Fetch-Dest': 'empty',
+                'Sec-Fetch-Mode': 'cors',
+                'Sec-Fetch-Site': 'same-site'
             }
             
             print(f"CORS プリフライト送信中: {method} {url}")
@@ -382,7 +387,15 @@ class FukuokaWaterDownloader:
             headers = {
                 'Content-Type': 'application/json;charset=utf-8',
                 'Authorization': self.jwt_token,
-                'Content-Length': str(len(json.dumps(create_data)))
+                'Content-Length': str(len(json.dumps(create_data))),
+                'Authority': 'api.suido-madoguchi-fukuoka.jp',
+                'Scheme': 'https',
+                'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
+                'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
+                'Sec-Fetch-Dest': 'empty',
+                'Sec-Fetch-Mode': 'cors',
+                'Sec-Fetch-Site': 'same-site'
             }
             
             print("ファイル作成要求中...")
@@ -419,7 +432,15 @@ class FukuokaWaterDownloader:
                 return None
             
             download_headers = {
-                'Authorization': self.jwt_token
+                'Authorization': self.jwt_token,
+                'Authority': 'api.suido-madoguchi-fukuoka.jp',
+                'Scheme': 'https',
+                'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
+                'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
+                'Sec-Fetch-Dest': 'empty',
+                'Sec-Fetch-Mode': 'cors',
+                'Sec-Fetch-Site': 'same-site'
             }
             
             print("ダウンロードURL取得中...")
