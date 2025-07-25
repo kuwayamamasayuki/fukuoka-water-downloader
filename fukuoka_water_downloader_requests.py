@@ -248,7 +248,67 @@ class FukuokaWaterDownloader:
             print(f"CORS プリフライトエラー: {e}")
             return False
 
-
+    def get_user_data(self) -> bool:
+        """ユーザーデータを取得してdwKeyを抽出"""
+        try:
+            if not self.jwt_token:
+                print("JWTトークンが必要です")
+                return False
+            
+            print("ユーザーデータを取得中...")
+            
+            userdata_url = f"{self.api_base_url}/user/userdata"
+            
+            headers = {
+                'Authorization': self.jwt_token,
+                'accept': 'application/json, text/plain, */*',
+                'accept-language': 'ja,en-US;q=0.7,en;q=0.3',
+                'accept-encoding': 'gzip, deflate, br, zstd',
+                'priority': 'u=0',
+                'te': 'trailers',
+                'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
+                'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
+                'Sec-Fetch-Dest': 'empty',
+                'Sec-Fetch-Mode': 'cors',
+                'Sec-Fetch-Site': 'same-site'
+            }
+            
+            self.log_request("GET", userdata_url, headers)
+            
+            response = self.session.get(userdata_url, headers=headers)
+            
+            self.log_response(response)
+            
+            if response.status_code == 200:
+                response_data = response.json()
+                if 'data' in response_data and 'dwKey' in response_data['data']:
+                    self.user_id = response_data['data']['dwKey']
+                    print(f"dwKeyを取得しました: {self.user_id}")
+                    if self.debug:
+                        debug_msg = f"ユーザーデータ取得成功: dwKey={self.user_id}"
+                        if self.debug_log_file:
+                            logging.debug(debug_msg)
+                        else:
+                            print(debug_msg)
+                    return True
+                else:
+                    print("dwKeyが見つかりませんでした")
+                    return False
+            else:
+                print(f"ユーザーデータ取得に失敗しました。ステータスコード: {response.status_code}")
+                print(f"レスポンス: {response.text}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            print(f"ユーザーデータ取得中にエラーが発生しました: {e}")
+            if self.debug:
+                error_msg = f"ユーザーデータ取得詳細エラー: {str(e)}"
+                if self.debug_log_file:
+                    logging.debug(error_msg)
+                else:
+                    print(error_msg)
+            return False
 
     def get_credentials(self, email: Optional[str] = None, password: Optional[str] = None) -> Tuple[str, str]:
         """認証情報を取得"""
@@ -311,8 +371,6 @@ class FukuokaWaterDownloader:
                         payload += '=' * (4 - len(payload) % 4)
                         decoded = base64.b64decode(payload)
                         jwt_data = json.loads(decoded)
-                        self.user_id = jwt_data.get('userId')
-                        print(f"ユーザーID: {self.user_id}")
                         if self.debug:
                             masked_jwt_data = jwt_data.copy()
                             if self.debug_log_file:
@@ -327,6 +385,10 @@ class FukuokaWaterDownloader:
                                 logging.debug(error_msg)
                             else:
                                 print(error_msg)
+                    
+                    if not self.get_user_data():
+                        print("ユーザーデータの取得に失敗しました")
+                        return False
                     
                     return True
                 else:
