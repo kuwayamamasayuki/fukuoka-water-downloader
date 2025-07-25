@@ -148,19 +148,16 @@ class FukuokaWaterDownloader:
         if headers:
             message += "Headers:\n"
             for key, value in headers.items():
-                if key.lower() == 'authorization':
-                    message += f"  {key}: [HIDDEN]\n"
-                else:
-                    message += f"  {key}: {value}\n"
+                message += f"  {key}: {value}\n"
         
         if data:
             message += "Request Body:\n"
             if isinstance(data, dict):
                 masked_data = data.copy()
                 if 'password' in masked_data:
-                    masked_data['password'] = '[HIDDEN]'
+                    masked_data['password'] = '[MASKED_PASSWORD]'
                 if 'loginId' in masked_data:
-                    masked_data['loginId'] = self.mask_email(masked_data['loginId'])
+                    masked_data['loginId'] = '[MASKED_EMAIL]'
                 message += f"  {json.dumps(masked_data, indent=2, ensure_ascii=False)}\n"
             else:
                 message += f"  {data}\n"
@@ -186,7 +183,12 @@ class FukuokaWaterDownloader:
         try:
             if response.headers.get('content-type', '').startswith('application/json'):
                 json_data = response.json()
-                message += f"  {json.dumps(json_data, indent=2, ensure_ascii=False)}\n"
+                masked_data = json_data.copy() if isinstance(json_data, dict) else json_data
+                if isinstance(masked_data, dict):
+                    if 'data' in masked_data and isinstance(masked_data['data'], dict):
+                        if 'mailAddress' in masked_data['data']:
+                            masked_data['data']['mailAddress'] = '[MASKED_EMAIL]'
+                message += f"  {json.dumps(masked_data, indent=2, ensure_ascii=False)}\n"
             else:
                 content = response.text[:500]
                 if len(response.text) > 500:
@@ -467,6 +469,15 @@ class FukuokaWaterDownloader:
             }
             
             print("ファイル作成要求中...")
+            if self.debug:
+                print(f"=== AUTHENTICATION DEBUG INFO ===")
+                print(f"JWT Token (first 100 chars): {self.jwt_token[:100]}...")
+                print(f"User ID (dwKey): {self.user_id}")
+                print(f"Create URL: {create_url}")
+                print(f"Request body: {json.dumps(create_data, ensure_ascii=False)}")
+                print(f"Authorization header: {headers.get('Authorization', 'NOT SET')[:100]}...")
+                print("="*40)
+            
             self.log_request("POST", create_url, headers, create_data)
             response = self.session.post(create_url, json=create_data, headers=headers)
             self.log_response(response)
