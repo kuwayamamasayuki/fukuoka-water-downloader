@@ -451,10 +451,13 @@ class FukuokaWaterDownloader:
                 "kenYmTo": ken_ym_to
             }
             
+            json_body = json.dumps(create_data, separators=(',', ':'), ensure_ascii=False)
+            json_bytes = json_body.encode('utf-8')
+            
             headers = {
                 'Content-Type': 'application/json;charset=utf-8',
                 'Authorization': self.jwt_token,
-                'Content-Length': str(len(json.dumps(create_data))),
+                'Content-Length': str(len(json_bytes)),
                 'accept': 'application/json, text/plain, */*',
                 'accept-language': 'ja,en-US;q=0.7,en;q=0.3',
                 'accept-encoding': 'gzip, deflate, br, zstd',
@@ -474,12 +477,13 @@ class FukuokaWaterDownloader:
                 print(f"JWT Token (first 100 chars): {self.jwt_token[:100]}...")
                 print(f"User ID (dwKey): {self.user_id}")
                 print(f"Create URL: {create_url}")
-                print(f"Request body: {json.dumps(create_data, ensure_ascii=False)}")
+                print(f"Request body: {json_body}")
+                print(f"Request body UTF-8 bytes: {len(json_bytes)}")
                 print(f"Authorization header: {headers.get('Authorization', 'NOT SET')[:100]}...")
                 print("="*40)
             
             self.log_request("POST", create_url, headers, create_data)
-            response = self.session.post(create_url, json=create_data, headers=headers)
+            response = self.session.post(create_url, data=json_bytes, headers=headers)
             self.log_response(response)
             response.raise_for_status()
             
