@@ -284,6 +284,16 @@ class FukuokaWaterDownloader:
             
             if response.status_code == 200:
                 response_data = response.json()
+                
+                if 'token' in response_data:
+                    self.jwt_token = response_data['token']
+                    if self.debug:
+                        debug_msg = "JWTトークンを更新しました (get_user_data)"
+                        if self.debug_log_file:
+                            logging.debug(debug_msg)
+                        else:
+                            print(debug_msg)
+                
                 if 'data' in response_data and 'dwKey' in response_data['data']:
                     self.user_id = response_data['data']['dwKey']
                     print(f"dwKeyを取得しました: {self.user_id}")
@@ -494,6 +504,15 @@ class FukuokaWaterDownloader:
             create_result = response.json()
             print(f"ファイル作成結果: {create_result}")
             
+            if 'token' in create_result:
+                self.jwt_token = create_result['token']
+                if self.debug:
+                    debug_msg = "JWTトークンを更新しました (download_billing_data - create)"
+                    if self.debug_log_file:
+                        logging.debug(debug_msg)
+                    else:
+                        print(debug_msg)
+            
             if create_result.get('result') == '27300':
                 print("エラー 27300: ファイル作成に失敗しました。認証またはパラメータの問題の可能性があります。")
                 return None
@@ -541,6 +560,15 @@ class FukuokaWaterDownloader:
             
             download_info = response.json()
             print(f"ダウンロード情報: {download_info}")
+            
+            if 'token' in download_info:
+                self.jwt_token = download_info['token']
+                if self.debug:
+                    debug_msg = "JWTトークンを更新しました (download_billing_data - download)"
+                    if self.debug_log_file:
+                        logging.debug(debug_msg)
+                    else:
+                        print(debug_msg)
             
             if download_info.get('result') == '21801':
                 print("エラー 21801: ダウンロードURL取得に失敗しました。認証またはファイル作成の問題の可能性があります。")
