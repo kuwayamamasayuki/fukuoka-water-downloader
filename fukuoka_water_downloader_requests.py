@@ -674,7 +674,9 @@ class FukuokaWaterDownloader:
                 return False
             
             if not date_from and not date_to:
-                print("デフォルトの期間を使用: 最新のデータのみ")
+                print("デフォルトの期間を取得中...")
+                date_from, date_to = self.get_default_date_range()
+                print(f"デフォルト期間を使用: {date_from} から {date_to}")
             else:
                 if date_from:
                     print(f"開始期間: {date_from}")
