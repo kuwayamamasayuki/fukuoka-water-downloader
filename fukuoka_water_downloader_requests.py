@@ -530,7 +530,7 @@ class FukuokaWaterDownloader:
             else:
                 import time
                 timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-                filename = f"riyourireki_{self.user_id.replace('000', '3-0-').replace('0', '-0-')}-{timestamp}.csv"
+                filename = f"riyourireki_{self.user_id}_{timestamp}.csv"
             
             download_url_endpoint = f"{self.api_base_url}/user/file/download/paylog/{self.user_id}/{filename}"
             
