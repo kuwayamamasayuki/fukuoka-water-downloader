@@ -489,6 +489,7 @@ class FukuokaWaterDownloader:
                 print(f"Create URL: {create_url}")
                 print(f"Request body: {json_body}")
                 print(f"Request body UTF-8 bytes: {len(json_bytes)}")
+                print(f"Request body hex: {json_bytes.hex()}")
                 print(f"Authorization header: {headers.get('Authorization', 'NOT SET')[:100]}...")
                 print("="*40)
             
