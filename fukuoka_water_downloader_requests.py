@@ -22,6 +22,7 @@ from typing import Optional, Dict, Any, Tuple
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+from bs4 import BeautifulSoup
 
 
 class FukuokaWaterDownloader:
@@ -202,6 +203,7 @@ class FukuokaWaterDownloader:
             logging.debug(message)
         else:
             print(message)
+
     def send_cors_preflight(self, url: str, method: str, request_headers: list) -> bool:
         """Send CORS preflight OPTIONS request before actual API call"""
         try:
@@ -426,22 +428,53 @@ class FukuokaWaterDownloader:
             return False
 
     def get_default_date_range(self) -> Tuple[str, str]:
-        """デフォルトの日付範囲を取得（直近の期間）"""
-        today = datetime.now()
-        
-        end_date = today
-        start_date = today - timedelta(days=60)
-        
-        return start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")
+        """デフォルトの日付範囲を取得（Webページのドロップダウンから）"""
+        try:
+            waterPrice_url = f"{self.base_url}/#/waterPrice"
+            
+            headers = {
+                'Authorization': self.jwt_token,
+                'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'accept-language': 'ja,en-US;q=0.7,en;q=0.3',
+                'accept-encoding': 'gzip, deflate, br, zstd',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
+                'Referer': f"{self.base_url}/",
+            }
+            
+            response = self.session.get(waterPrice_url, headers=headers)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            dropdown = soup.select_one('body > div > div:nth-child(3) > div:nth-child(2) > div > div > div:nth-child(2) > div:nth-child(3) > select')
+            
+            if dropdown:
+                options = dropdown.find_all('option')
+                if options:
+                    latest_option = options[-1].get_text().strip()
+                    return latest_option, latest_option
+            
+            print("Webページからの期間取得に失敗しました。デフォルト期間を使用します。")
+            today = datetime.now()
+            end_date = today
+            start_date = today - timedelta(days=60)
+            return start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")
+            
+        except Exception as e:
+            print(f"期間取得中にエラーが発生しました: {e}")
+            today = datetime.now()
+            end_date = today
+            start_date = today - timedelta(days=60)
+            return start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")
 
-    def download_billing_data(self, date_from: str, date_to: str, output_format: str = 'csv') -> Optional[bytes]:
+    def download_billing_data(self, date_from: str, date_to: str, output_format: str = 'csv') -> Optional[Tuple[bytes, str]]:
         """料金データをダウンロード"""
         try:
             if not self.jwt_token or not self.user_id:
                 print("認証が必要です")
-                return None
+                return None, None
             
-            print(f"料金データをダウンロード中...")
+            print("料金データをダウンロード中...")
             
             ken_ym_from = self.convert_date_to_kenyin_format(date_from)
             ken_ym_to = self.convert_date_to_kenyin_format(date_to)
@@ -455,7 +488,7 @@ class FukuokaWaterDownloader:
             
             if not self.send_cors_preflight(create_url, 'POST', ['authorization', 'content-type']):
                 print("CORS プリフライトに失敗しました。処理を中止します。")
-                return None
+                return None, None
             
             format_type = "2" if output_format.lower() == 'csv' else "1"  # CSV=2, PDF=1
             
@@ -495,7 +528,7 @@ class FukuokaWaterDownloader:
                 print(f"Request body UTF-8 bytes: {len(json_bytes)}")
                 print(f"Request body hex: {json_bytes.hex()}")
                 print(f"Authorization header: {headers.get('Authorization', 'NOT SET')[:100]}...")
-                print("="*40)
+                print("=" * 40)
             
             self.log_request("POST", create_url, headers, create_data)
             response = self.session.post(create_url, data=json_bytes, headers=headers)
@@ -504,10 +537,10 @@ class FukuokaWaterDownloader:
             
             if response.status_code != 200:
                 print(f"ファイル作成に失敗しました。ステータスコード: {response.status_code}")
-                return None
+                return None, None
             
             create_result = response.json()
-            print(f"ファイル作成結果: {create_result}")
+            print("ファイル作成結果:", create_result)
             
             if 'token' in create_result:
                 self.jwt_token = create_result['token']
@@ -520,10 +553,10 @@ class FukuokaWaterDownloader:
             
             if create_result.get('result') == '27300':
                 print("エラー 27300: ファイル作成に失敗しました。認証またはパラメータの問題の可能性があります。")
-                return None
+                return None, None
             elif create_result.get('result') != '00000':
                 print(f"予期しないレスポンス: {create_result}")
-                return None
+                return None, None
             
             if 'data' in create_result and 'fileName' in create_result['data']:
                 filename = create_result['data']['fileName']
@@ -536,7 +569,7 @@ class FukuokaWaterDownloader:
             
             if not self.send_cors_preflight(download_url_endpoint, 'GET', ['authorization']):
                 print("CORS プリフライトに失敗しました。処理を中止します。")
-                return None
+                return None, None
             
             download_headers = {
                 'Authorization': self.jwt_token,
@@ -561,7 +594,7 @@ class FukuokaWaterDownloader:
             
             if response.status_code != 200:
                 print(f"ダウンロードURL取得に失敗しました。ステータスコード: {response.status_code}")
-                return None
+                return None, None
             
             download_info = response.json()
             print(f"ダウンロード情報: {download_info}")
@@ -577,10 +610,10 @@ class FukuokaWaterDownloader:
             
             if download_info.get('result') == '21801':
                 print("エラー 21801: ダウンロードURL取得に失敗しました。認証またはファイル作成の問題の可能性があります。")
-                return None
+                return None, None
             elif download_info.get('result') != '00000':
                 print(f"予期しないレスポンス: {download_info}")
-                return None
+                return None, None
             
             if 'downloadUrl' in download_info:
                 signed_url = download_info['downloadUrl']
@@ -599,10 +632,10 @@ class FukuokaWaterDownloader:
                 content_type = response.headers.get('content-type', '')
                 print(f"Content-Type: {content_type}")
                 
-                return response.content
+                return response.content, filename
             else:
                 print(f"ダウンロードに失敗しました。ステータスコード: {response.status_code}")
-                return None
+                return None, None
                 
         except requests.exceptions.RequestException as e:
             print(f"ダウンロード中にエラーが発生しました: {e}")
@@ -612,7 +645,7 @@ class FukuokaWaterDownloader:
                     logging.debug(error_msg)
                 else:
                     print(error_msg)
-            return None
+            return None, None
 
     def save_data(self, data: bytes, filename: str, output_format: str):
         """データをファイルに保存"""
@@ -629,7 +662,7 @@ class FukuokaWaterDownloader:
         except Exception as e:
             print(f"ファイル保存中にエラーが発生しました: {e}")
 
-    def run(self, email: Optional[str] = None, password: Optional[str] = None, 
+    def run(self, email: Optional[str] = None, password: Optional[str] = None,
             date_from: Optional[str] = None, date_to: Optional[str] = None,
             output_format: str = 'csv', output_file: Optional[str] = None):
         """メイン実行処理"""
@@ -648,15 +681,16 @@ class FukuokaWaterDownloader:
                 if date_to:
                     print(f"終了期間: {date_to}")
             
-            data = self.download_billing_data(date_from, date_to, output_format)
+            result = self.download_billing_data(date_from, date_to, output_format)
             
-            if not data:
+            if not result or not result[0]:
                 print("データのダウンロードに失敗しました。")
                 return False
             
+            data, api_filename = result
+            
             if not output_file:
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_file = f"fukuoka_water_bill_{timestamp}.{output_format}"
+                output_file = api_filename if api_filename else f"fukuoka_water_bill_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{output_format}"
             
             self.save_data(data, output_file, output_format)
             
