@@ -261,6 +261,10 @@ class FukuokaWaterDownloader:
             
             userdata_url = f"{self.api_base_url}/user/userdata"
             
+            if not self.send_cors_preflight(userdata_url, 'GET', ['authorization']):
+                print("CORS プリフライトに失敗しました。処理を中止します。")
+                return False
+            
             headers = {
                 'Authorization': self.jwt_token,
                 'accept': 'application/json, text/plain, */*',
