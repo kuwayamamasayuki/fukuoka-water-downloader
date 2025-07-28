@@ -441,31 +441,96 @@ class FukuokaWaterDownloader:
                 'Referer': f"{self.base_url}/",
             }
             
+            if self.debug:
+                print(f"[DEBUG] デフォルト期間取得: リクエスト送信中...")
+                print(f"[DEBUG] URL: {waterPrice_url}")
+                print(f"[DEBUG] Authorization: {self.jwt_token[:20]}..." if self.jwt_token else "[DEBUG] Authorization: None")
+            
             response = self.session.get(waterPrice_url, headers=headers)
+            
+            if self.debug:
+                print(f"[DEBUG] レスポンス受信: ステータスコード {response.status_code}")
+                print(f"[DEBUG] Content-Type: {response.headers.get('content-type', 'Unknown')}")
+                print(f"[DEBUG] Content-Length: {len(response.content)} bytes")
+            
             response.raise_for_status()
             
             soup = BeautifulSoup(response.content, 'html.parser')
             
-            dropdown = soup.select_one('body > div > div:nth-child(3) > div:nth-child(2) > div > div > div:nth-child(2) > div:nth-child(3) > select')
+            if self.debug:
+                print(f"[DEBUG] HTML解析完了")
+                html_preview = str(response.content[:500])
+                print(f"[DEBUG] HTML先頭500文字: {html_preview}")
+                
+                if b'waterPrice' in response.content:
+                    print(f"[DEBUG] ページ内容確認: 'waterPrice'文字列が見つかりました")
+                else:
+                    print(f"[DEBUG] ページ内容確認: 'waterPrice'文字列が見つかりません")
+            
+            css_selector = 'body > div > div:nth-child(3) > div:nth-child(2) > div > div > div:nth-child(2) > div:nth-child(3) > select'
+            
+            if self.debug:
+                print(f"[DEBUG] CSSセレクター検索: {css_selector}")
+            
+            dropdown = soup.select_one(css_selector)
+            
+            if self.debug:
+                if dropdown:
+                    print(f"[DEBUG] ドロップダウン要素発見: {dropdown.name}")
+                    print(f"[DEBUG] ドロップダウン属性: {dropdown.attrs}")
+                else:
+                    print(f"[DEBUG] ドロップダウン要素が見つかりません")
+                    
+                    all_selects = soup.find_all('select')
+                    print(f"[DEBUG] ページ内のselect要素数: {len(all_selects)}")
+                    for i, select in enumerate(all_selects):
+                        print(f"[DEBUG] select[{i}]: {select.attrs}")
+                        options = select.find_all('option')
+                        print(f"[DEBUG] select[{i}] options数: {len(options)}")
+                        if options:
+                            print(f"[DEBUG] select[{i}] 最初のoption: {options[0].get_text().strip()}")
+                            print(f"[DEBUG] select[{i}] 最後のoption: {options[-1].get_text().strip()}")
             
             if dropdown:
                 options = dropdown.find_all('option')
+                if self.debug:
+                    print(f"[DEBUG] オプション数: {len(options)}")
+                    for i, option in enumerate(options):
+                        print(f"[DEBUG] option[{i}]: '{option.get_text().strip()}'")
+                
                 if options:
                     latest_option = options[-1].get_text().strip()
+                    if self.debug:
+                        print(f"[DEBUG] 選択された期間: {latest_option}")
                     return latest_option, latest_option
             
+            if self.debug:
+                print("[DEBUG] Webスクレイピング失敗: フォールバック期間を使用")
             print("Webページからの期間取得に失敗しました。デフォルト期間を使用します。")
             today = datetime.now()
             end_date = today
             start_date = today - timedelta(days=60)
-            return start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")
+            fallback_start = start_date.strftime("%Y-%m-%d")
+            fallback_end = end_date.strftime("%Y-%m-%d")
+            if self.debug:
+                print(f"[DEBUG] フォールバック期間: {fallback_start} から {fallback_end}")
+            return fallback_start, fallback_end
             
         except Exception as e:
+            if self.debug:
+                print(f"[DEBUG] 例外発生: {type(e).__name__}: {e}")
+                import traceback
+                print(f"[DEBUG] スタックトレース:")
+                traceback.print_exc()
             print(f"期間取得中にエラーが発生しました: {e}")
             today = datetime.now()
             end_date = today
             start_date = today - timedelta(days=60)
-            return start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")
+            fallback_start = start_date.strftime("%Y-%m-%d")
+            fallback_end = end_date.strftime("%Y-%m-%d")
+            if self.debug:
+                print(f"[DEBUG] 例外後フォールバック期間: {fallback_start} から {fallback_end}")
+            return fallback_start, fallback_end
 
     def download_billing_data(self, date_from: str, date_to: str, output_format: str = 'csv') -> Optional[Tuple[bytes, str]]:
         """料金データをダウンロード"""
