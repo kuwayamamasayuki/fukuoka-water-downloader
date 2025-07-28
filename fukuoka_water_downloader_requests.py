@@ -525,8 +525,8 @@ class FukuokaWaterDownloader:
                 print(f"予期しないレスポンス: {create_result}")
                 return None
             
-            if 'filename' in create_result:
-                filename = create_result['filename']
+            if 'fileName' in create_result:
+                filename = create_result['fileName']
             else:
                 import time
                 timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
