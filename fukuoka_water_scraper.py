@@ -2,6 +2,9 @@
 """
 福岡市水道局アプリから水道料金データをダウンロードするスクリプト
 Fukuoka City Water Bureau App - Water Bill Data Scraper
+
+This script automates the process of downloading water billing data
+from the Fukuoka City Water Bureau web application.
 """
 
 import os
