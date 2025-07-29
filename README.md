@@ -1,32 +1,27 @@
-# 福岡市水道局アプリ - 水道料金データスクレイパー
+# 福岡市水道局アプリ - 水道料金データダウンローダー
 
 福岡市水道局のWebアプリケーション（https://www.suido-madoguchi-fukuoka.jp/#/login）から水道料金ファイルを自動的にダウンロードするPythonスクリプトです。
 
 ## 機能
 
-- 自動ログイン
+- 自動ログイン（JWT認証）
 - CSV/PDF形式でのファイルダウンロード
-- 期間指定でのダウンロード
+- 期間指定でのダウンロード（現在の月がデフォルト）
 - コマンドライン引数による柔軟な操作
+- 詳細なデバッグログ機能
 - エラーハンドリング
+- CORS プリフライト対応
 
 ## 必要な環境
 
 - Python 3.7以上
-- Chrome/Chromiumブラウザ
-- ChromeDriver
+- インターネット接続
 
 ## インストール
 
-1. 必要なパッケージをインストール：
+必要なパッケージをインストール：
 ```bash
 pip install -r requirements.txt
-```
-
-2. ChromeDriverをインストール（Ubuntu/Debian）：
-```bash
-sudo apt-get update
-sudo apt-get install chromium-chromedriver
 ```
 
 ## 使用方法
@@ -36,51 +31,52 @@ sudo apt-get install chromium-chromedriver
 #### 基本的な使用方法
 ```bash
 # 環境変数で認証情報を設定
-export mailaddress="your_email@example.com"
-export password="your_password"
+export FUKUOKA_WATER_EMAIL="your_email@example.com"
+export FUKUOKA_WATER_PASSWORD="your_password"
 
-# デフォルト設定で実行（CSV形式、最新期間）
-python3 fukuoka_water_scraper.py
+# デフォルト設定で実行（CSV形式、現在の月）
+python3 fukuoka_water_downloader_requests.py
 
 # または直接認証情報を指定
-python3 fukuoka_water_scraper.py --email your_email@example.com --password your_password
+python3 fukuoka_water_downloader_requests.py --email your_email@example.com --password your_password
 ```
 
 #### 詳細オプション
 ```bash
 # PDF形式でダウンロード
-python3 fukuoka_water_scraper.py --format PDF
+python3 fukuoka_water_downloader_requests.py --format pdf
 
-# 期間範囲を指定（推奨）
-python3 fukuoka_water_scraper.py --period-from "2024年1月" --period-to "2025年3月" --format CSV
+# 期間範囲を指定
+python3 fukuoka_water_downloader_requests.py --date-from "2024-01" --date-to "2025-03" --format csv
 
-# 従来の単一期間指定も引き続き利用可能
-python3 fukuoka_water_scraper.py --period "2024年4月" --format CSV
+# カスタム出力ファイル名を指定
+python3 fukuoka_water_downloader_requests.py --output custom_filename.csv
 
-# カスタム出力ディレクトリを指定
-python3 fukuoka_water_scraper.py --output-dir ./my_downloads
+# デバッグモードで実行
+python3 fukuoka_water_downloader_requests.py --debug
 
-# ブラウザを表示して実行（デバッグ用）
-python3 fukuoka_water_scraper.py --headful
+# デバッグログをファイルに保存
+python3 fukuoka_water_downloader_requests.py --debug-log debug.log
 ```
 
 #### ヘルプ表示
 ```bash
-python3 fukuoka_water_scraper.py --help
+python3 fukuoka_water_downloader_requests.py --help
 ```
 
 ### コマンドライン引数
 
 | 引数 | 短縮形 | 説明 | デフォルト |
 |------|--------|------|------------|
-| `--email` | `-e` | ログイン用メールアドレス | 環境変数 `mailaddress` |
-| `--password` | `-p` | ログイン用パスワード | 環境変数 `password` |
-| `--period` | | ダウンロード期間（単一期間） | 最新期間 |
-| `--period-from` | | ダウンロード開始期間 | Webサイトのデフォルト値 |
-| `--period-to` | | ダウンロード終了期間 | Webサイトのデフォルト値 |
-| `--format` | `-f` | 出力フォーマット（CSV/PDF） | CSV |
-| `--output-dir` | `-o` | ダウンロード先ディレクトリ | ./downloads |
-| `--headful` | | ブラウザを表示して実行 | ヘッドレス |
+| `--email` | `-e` | ログイン用メールアドレス | 環境変数 `FUKUOKA_WATER_EMAIL` |
+| `--password` | `-p` | ログイン用パスワード | 環境変数 `FUKUOKA_WATER_PASSWORD` |
+| `--date-from` | `--from` | ダウンロード開始期間（YYYY-MM形式） | 現在の月 |
+| `--date-to` | `--to` | ダウンロード終了期間（YYYY-MM形式） | 現在の月 |
+| `--format` | `-f` | 出力フォーマット（csv/pdf） | csv |
+| `--output` | `-o` | 出力ファイル名 | APIから返されるファイル名 |
+| `--verbose` | `-v` | 詳細な出力を表示 | False |
+| `--debug` | `-d` | デバッグ情報を表示 | False |
+| `--debug-log` | | デバッグ情報をファイルに保存 | なし |
 | `--help` | `-h` | ヘルプを表示 | |
 
 ### 期間指定の詳細
@@ -90,26 +86,29 @@ python3 fukuoka_water_scraper.py --help
 スクリプトは以下の様々な日付フォーマットに対応しています：
 
 ```bash
-# 標準的な日本語形式
-python3 fukuoka_water_scraper.py --period-from "2024年1月"
+# 標準的なYYYY-MM形式（推奨）
+python3 fukuoka_water_downloader_requests.py --date-from "2024-01" --date-to "2024-12"
+
+# 日本語形式
+python3 fukuoka_water_downloader_requests.py --date-from "2024年1月"
 
 # 西暦スラッシュ形式
-python3 fukuoka_water_scraper.py --period-from "2024/1"
+python3 fukuoka_water_downloader_requests.py --date-from "2024/1"
 
 # 西暦ドット形式  
-python3 fukuoka_water_scraper.py --period-from "2024.1"
+python3 fukuoka_water_downloader_requests.py --date-from "2024.1"
 
 # 令和年号省略形式（ドット）
-python3 fukuoka_water_scraper.py --period-from "R6.1"
+python3 fukuoka_water_downloader_requests.py --date-from "R6.1"
 
 # 令和年号省略形式（スラッシュ）
-python3 fukuoka_water_scraper.py --period-from "R6/1"
+python3 fukuoka_water_downloader_requests.py --date-from "R6/1"
 
 # 完全な日本語年号形式
-python3 fukuoka_water_scraper.py --period-from "令和６年１月"
+python3 fukuoka_water_downloader_requests.py --date-from "令和６年１月"
 
 # 混合形式（半角・全角数字）
-python3 fukuoka_water_scraper.py --period-from "令和6年1月"
+python3 fukuoka_water_downloader_requests.py --date-from "令和6年1月"
 ```
 
 #### 令和年号対応表
@@ -128,114 +127,120 @@ python3 fukuoka_water_scraper.py --period-from "令和6年1月"
 
 ```bash
 # 西暦形式と令和省略形式の組み合わせ
-python3 fukuoka_water_scraper.py --period-from "2024/1" --period-to "R7.3"
+python3 fukuoka_water_downloader_requests.py --date-from "2024/1" --date-to "R7.3"
 
 # 日本語形式と西暦形式の組み合わせ  
-python3 fukuoka_water_scraper.py --period-from "令和６年１月" --period-to "2025年3月"
+python3 fukuoka_water_downloader_requests.py --date-from "令和６年１月" --date-to "2025年3月"
 
 # 省略形式と標準形式の組み合わせ
-python3 fukuoka_water_scraper.py --period-from "R6.1" --period-to "2024年12月"
+python3 fukuoka_water_downloader_requests.py --date-from "R6.1" --date-to "2024年12月"
 ```
 
 ### 環境変数での認証情報設定
 
 ```bash
 # 認証情報を環境変数に設定
-export mailaddress="your_email@example.com"
-export password="your_password"
+export FUKUOKA_WATER_EMAIL="your_email@example.com"
+export FUKUOKA_WATER_PASSWORD="your_password"
 
 # 設定後はメールアドレスとパスワードの指定不要
-python3 fukuoka_water_scraper.py --format PDF
+python3 fukuoka_water_downloader_requests.py --format pdf
 ```
 
 ### Pythonスクリプトとしての使用
 
 ```python
-from fukuoka_water_scraper import FukuokaWaterScraper
+from fukuoka_water_downloader_requests import FukuokaWaterDownloader
 
-# スクレイパーのインスタンスを作成
-scraper = FukuokaWaterScraper(
-    headless=True,
-    download_dir="./downloads"
-)
+# ダウンローダーのインスタンスを作成
+downloader = FukuokaWaterDownloader(debug=True)
 
-# スクレイピング実行
-result = scraper.run(
+# ダウンロード実行
+success = downloader.run(
     email="your_email@example.com",
     password="your_password",
-    output_period=None,  # 最新期間
-    format_type="CSV"    # CSV形式
+    date_from=None,      # 現在の月
+    date_to=None,        # 現在の月
+    output_format="csv", # CSV形式
+    output_file=None     # APIから返されるファイル名を使用
 )
 
-if result['success']:
+if success:
     print("ファイルのダウンロードに成功しました")
-    print(f"ダウンロードファイル: {result['downloaded_files']}")
 else:
-    print(f"エラー: {result['error_message']}")
+    print("ダウンロードに失敗しました")
 ```
 
 ## 出力ファイル
 
 ### ダウンロードファイル
-- **CSV形式**: `riyourireki_*.csv` - 利用履歴データ
-- **PDF形式**: `riyourireki_*.pdf` - 利用履歴PDF
+- **CSV形式**: APIから返されるファイル名（例：`riyourireki_*.csv`）- 利用履歴データ
+- **PDF形式**: APIから返されるファイル名（例：`riyourireki_*.pdf`）- 利用履歴PDF
 
+ファイル名は福岡市水道局のAPIから自動的に取得され、そのまま使用されます。
 
 ## 設定オプション
 
-### FukuokaWaterScraperクラスのパラメータ
+### FukuokaWaterDownloaderクラスのパラメータ
 
-- `headless` (bool): ヘッドレスモードで実行するかどうか（デフォルト: True）
-- `download_dir` (str): ダウンロードディレクトリのパス（デフォルト: "./downloads"）
+- `debug` (bool): デバッグモードで実行するかどうか（デフォルト: False）
+- `debug_log_file` (str): デバッグログファイルのパス（デフォルト: None）
 
 ### runメソッドのパラメータ
 
 - `email` (str): ログイン用メールアドレス
 - `password` (str): ログイン用パスワード
-- `output_period` (str): ダウンロード期間（None で最新期間）
-- `format_type` (str): 出力フォーマット（"CSV" または "PDF"）
+- `date_from` (str): ダウンロード開始期間（None で現在の月）
+- `date_to` (str): ダウンロード終了期間（None で現在の月）
+- `output_format` (str): 出力フォーマット（"csv" または "pdf"）
+- `output_file` (str): 出力ファイル名（None でAPIから返されるファイル名を使用）
 
 ## エラーハンドリング
 
 スクリプトは以下のエラーを適切に処理します：
 
 - ネットワーク接続エラー
+- JWT認証エラー
 - ログイン失敗
-- ページ読み込みタイムアウト
-- 要素が見つからない場合
-- ダウンロード失敗
+- API呼び出しエラー
+- ファイルダウンロード失敗
+- CORS プリフライトエラー
 
 ## トラブルシューティング
 
 ### よくある問題
 
-1. **ChromeDriverが見つからない**
-   ```bash
-   sudo apt-get install chromium-chromedriver
-   ```
-
-2. **ログインに失敗する**
+1. **ログインに失敗する**
    - メールアドレスとパスワードを確認してください
    - アカウントがロックされていないか確認してください
+   - 環境変数が正しく設定されているか確認してください
 
-3. **タイムアウトエラー**
+2. **ネットワークエラー**
    - インターネット接続を確認してください
    - サイトがメンテナンス中でないか確認してください
+   - プロキシ設定を確認してください
 
-4. **ダウンロードが完了しない**
-   - ブラウザを表示して実行し、動作を確認してください
+3. **API呼び出しエラー**
+   - JWT トークンの有効期限が切れている可能性があります
+   - 再度ログインを試してください
+
+4. **ファイルダウンロードが失敗する**
+   - デバッグモードで詳細なログを確認してください
    ```bash
-   python3 fukuoka_water_scraper.py --headful
+   python3 fukuoka_water_downloader_requests.py --debug
    ```
 
 ### デバッグ方法
 
 ```bash
-# ブラウザを表示して詳細ログを確認
-python3 fukuoka_water_scraper.py --headful
+# デバッグモードで実行
+python3 fukuoka_water_downloader_requests.py --debug
+
+# デバッグログをファイルに保存
+python3 fukuoka_water_downloader_requests.py --debug-log debug.log
 
 # ログファイルを確認
-tail -f fukuoka_water_scraper.log
+tail -f debug.log
 ```
 
 ## 使用例
@@ -245,26 +250,29 @@ tail -f fukuoka_water_scraper.log
 #!/bin/bash
 # monthly_download.sh
 
-export mailaddress="your_email@example.com"
-export password="your_password"
+export FUKUOKA_WATER_EMAIL="your_email@example.com"
+export FUKUOKA_WATER_PASSWORD="your_password"
 
-# CSV形式で最新ファイルをダウンロード
-python3 fukuoka_water_scraper.py --format CSV --output-dir ./monthly_data
+# CSV形式で現在の月のファイルをダウンロード
+python3 fukuoka_water_downloader_requests.py --format csv
 
 # PDF形式でも保存
-python3 fukuoka_water_scraper.py --format PDF --output-dir ./monthly_data
+python3 fukuoka_water_downloader_requests.py --format pdf
 ```
 
 ### 特定期間のファイル取得
 ```bash
 # 2024年4月のファイルを取得
-python3 fukuoka_water_scraper.py --period "2024年4月" --format CSV
+python3 fukuoka_water_downloader_requests.py --date-from "2024-04" --date-to "2024-04" --format csv
 
 # 複数期間のファイルを順次取得
-for period in "2024年1月" "2024年2月" "2024年3月"; do
-    python3 fukuoka_water_scraper.py --period "$period" --format CSV
+for month in "2024-01" "2024-02" "2024-03"; do
+    python3 fukuoka_water_downloader_requests.py --date-from "$month" --date-to "$month" --format csv
     sleep 5  # サーバー負荷軽減のため待機
 done
+
+# 期間範囲でのダウンロード
+python3 fukuoka_water_downloader_requests.py --date-from "2024-01" --date-to "2024-12" --format csv
 ```
 
 ## ライセンス
@@ -277,27 +285,36 @@ done
 - 利用規約を遵守してください
 - 過度なアクセスは避けてください
 
-## WSL(Ubuntu 24.04.2 LTS)についての注意
+## テスト
 
-WSL(Ubuntu 24.04.2 LTS)で、次のようなエラーとなる事象が確認されました。
-```
-selenium.common.exceptions.WebDriverException: Message: Service /home/masayuki/.cache/selenium/chromedriver/linux64/138.0.7204.94/chromedriver unexpectedly exited. Status code was: 127
-```
+テストスクリプトは `tests/` ディレクトリに配置されています：
 
-原因は必要なライブラリが揃っていないことでしたので、次のようにして解決しました。
 ```bash
-sudo apt install libnspr4 libnss3 libasound2-dev
+# テストディレクトリの内容を確認
+ls tests/
+
+# 特定のテストを実行
+python3 tests/test_date_conversion.py
+python3 tests/test_requests_implementation.py
 ```
 
 
 
 ## 更新履歴
 
+- v1.0.0: Requests ベース実装への移行
+  - Selenium から requests ライブラリへの完全移行
+  - JWT 認証による自動ログイン
+  - CORS プリフライト対応
+  - APIから返されるファイル名の自動使用
+  - デフォルト日付範囲を現在の月に簡素化
+  - 詳細なデバッグログ機能
+  - 16進数ログ出力によるデバッグ支援
 - v0.5.0: Devinが作成していた変な変更履歴を修正した。
 - v0.4.0: スクリーンショットを取らないようにした。
 - v0.3.0: 拡張日付フォーマット対応
   - 複数の日付入力フォーマットに対応（2024/1, R6.1, R6/1, 令和６年１月など）
-  - 期間範囲指定機能（--period-from, --period-to）
+  - 期間範囲指定機能（--period-from, --period-to → --date-from, --date-to）
   - 令和年号省略形式対応（R6.1 = 令和6年1月）
   - 異なるフォーマットの組み合わせ対応
   - 全角・半角数字の自動変換
