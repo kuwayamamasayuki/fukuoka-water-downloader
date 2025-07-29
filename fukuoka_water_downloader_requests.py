@@ -520,14 +520,18 @@ class FukuokaWaterDownloader:
             
             if self.debug:
                 print("[DEBUG] Webスクレイピング失敗: フォールバック期間を使用")
-            print("Webページからの期間取得に失敗しました。デフォルト期間を使用します。")
+            print("Webページからの期間取得に失敗しました。現在の月をデフォルト期間として使用します。")
             today = datetime.now()
-            end_date = today
-            start_date = today - timedelta(days=60)
-            fallback_start = start_date.strftime("%Y-%m-%d")
-            fallback_end = end_date.strftime("%Y-%m-%d")
+            first_day_of_month = today.replace(day=1)
+            if today.month == 12:
+                last_day_of_month = today.replace(year=today.year + 1, month=1, day=1) - timedelta(days=1)
+            else:
+                last_day_of_month = today.replace(month=today.month + 1, day=1) - timedelta(days=1)
+            
+            fallback_start = first_day_of_month.strftime("%Y-%m-%d")
+            fallback_end = last_day_of_month.strftime("%Y-%m-%d")
             if self.debug:
-                print(f"[DEBUG] フォールバック期間: {fallback_start} から {fallback_end}")
+                print(f"[DEBUG] フォールバック期間（現在の月）: {fallback_start} から {fallback_end}")
             return fallback_start, fallback_end
             
         except Exception as e:
@@ -537,13 +541,18 @@ class FukuokaWaterDownloader:
                 print(f"[DEBUG] スタックトレース:")
                 traceback.print_exc()
             print(f"期間取得中にエラーが発生しました: {e}")
+            print("現在の月をデフォルト期間として使用します。")
             today = datetime.now()
-            end_date = today
-            start_date = today - timedelta(days=60)
-            fallback_start = start_date.strftime("%Y-%m-%d")
-            fallback_end = end_date.strftime("%Y-%m-%d")
+            first_day_of_month = today.replace(day=1)
+            if today.month == 12:
+                last_day_of_month = today.replace(year=today.year + 1, month=1, day=1) - timedelta(days=1)
+            else:
+                last_day_of_month = today.replace(month=today.month + 1, day=1) - timedelta(days=1)
+            
+            fallback_start = first_day_of_month.strftime("%Y-%m-%d")
+            fallback_end = last_day_of_month.strftime("%Y-%m-%d")
             if self.debug:
-                print(f"[DEBUG] 例外後フォールバック期間: {fallback_start} から {fallback_end}")
+                print(f"[DEBUG] 例外後フォールバック期間（現在の月）: {fallback_start} から {fallback_end}")
             return fallback_start, fallback_end
 
     def download_billing_data(self, date_from: str, date_to: str, output_format: str = 'csv') -> Optional[Tuple[bytes, str]]:
