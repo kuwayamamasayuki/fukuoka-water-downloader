@@ -156,6 +156,23 @@ class FukuokaWaterDownloader:
             month = int(r_notation_match.group(2))
             return format_reiwa_date(reiwa_year, month)
         
+        slash_dot_match = re.match(r'(\d{4})[/\.](\d{1,2})', date_str)
+        if slash_dot_match:
+            year = int(slash_dot_match.group(1))
+            month = int(slash_dot_match.group(2))
+            reiwa_year = year - 2018
+            if reiwa_year > 0:
+                return f"令和　{to_fullwidth_number(reiwa_year)}年　{to_fullwidth_number(month)}月検針分"
+            else:
+                heisei_year = year - 1988
+                return f"平成　{to_fullwidth_number(heisei_year)}年　{to_fullwidth_number(month)}月検針分"
+        
+        r_notation_match = re.match(r'[Rr](\d{1,2})[/\.](\d{1,2})', date_str)
+        if r_notation_match:
+            reiwa_year = int(r_notation_match.group(1))
+            month = int(r_notation_match.group(2))
+            return f"令和　{to_fullwidth_number(reiwa_year)}年　{to_fullwidth_number(month)}月検針分"
+        
         raise ValueError(f"サポートされていない日付形式です: {date_str}")
 
     def setup_debug_logging(self):
