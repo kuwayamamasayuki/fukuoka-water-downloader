@@ -22,7 +22,6 @@ from typing import Optional, Dict, Any, Tuple
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-from bs4 import BeautifulSoup
 
 
 class FukuokaWaterDownloader:
@@ -427,134 +426,6 @@ class FukuokaWaterDownloader:
                     print(error_msg)
             return False
 
-    def get_default_date_range(self) -> Tuple[str, str]:
-        """デフォルトの日付範囲を取得（Webページのドロップダウンから）"""
-        try:
-            waterPrice_url = f"{self.base_url}/#/waterPrice"
-            
-            headers = {
-                'Authorization': self.jwt_token,
-                'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-                'accept-language': 'ja,en-US;q=0.7,en;q=0.3',
-                'accept-encoding': 'gzip, deflate, br, zstd',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
-                'Referer': f"{self.base_url}/",
-            }
-            
-            if self.debug:
-                print(f"[DEBUG] デフォルト期間取得: リクエスト送信中...")
-                print(f"[DEBUG] URL: {waterPrice_url}")
-                print(f"[DEBUG] Authorization: {self.jwt_token[:20]}..." if self.jwt_token else "[DEBUG] Authorization: None")
-            
-            response = self.session.get(waterPrice_url, headers=headers)
-            
-            if self.debug:
-                print(f"[DEBUG] レスポンス受信: ステータスコード {response.status_code}")
-                print(f"[DEBUG] Content-Type: {response.headers.get('content-type', 'Unknown')}")
-                print(f"[DEBUG] Content-Length: {len(response.content)} bytes")
-            
-            response.raise_for_status()
-            
-            soup = BeautifulSoup(response.content, 'html.parser')
-            
-            if self.debug:
-                print(f"[DEBUG] HTML解析完了")
-                html_preview = str(response.content[:500])
-                print(f"[DEBUG] HTML先頭500文字: {html_preview}")
-                
-                if b'waterPrice' in response.content:
-                    print(f"[DEBUG] ページ内容確認: 'waterPrice'文字列が見つかりました")
-                else:
-                    print(f"[DEBUG] ページ内容確認: 'waterPrice'文字列が見つかりません")
-            
-            target_option_selector = 'body > div > div:nth-child(3) > div:nth-child(2) > div > div > div:nth-child(2) > div:nth-child(3) > select > option:nth-child(13)'
-            
-            if self.debug:
-                print(f"[DEBUG] CSSセレクター検索 (option[13]): {target_option_selector}")
-            
-            target_option = soup.select_one(target_option_selector)
-            
-            if self.debug:
-                if target_option:
-                    print(f"[DEBUG] 対象オプション要素発見: {target_option.name}")
-                    print(f"[DEBUG] オプション属性: {target_option.attrs}")
-                    print(f"[DEBUG] オプション内容: '{target_option.get_text().strip()}'")
-                else:
-                    print(f"[DEBUG] 対象オプション要素が見つかりません")
-                    
-                    parent_select_selector = 'body > div > div:nth-child(3) > div:nth-child(2) > div > div > div:nth-child(2) > div:nth-child(3) > select'
-                    parent_select = soup.select_one(parent_select_selector)
-                    
-                    if parent_select:
-                        print(f"[DEBUG] 親select要素は見つかりました")
-                        options = parent_select.find_all('option')
-                        print(f"[DEBUG] 親select内のoption数: {len(options)}")
-                        for i, option in enumerate(options, 1):
-                            print(f"[DEBUG] option[{i}]: '{option.get_text().strip()}'")
-                        
-                        if len(options) >= 13:
-                            print(f"[DEBUG] option[13]が存在します: '{options[12].get_text().strip()}'")
-                            target_option = options[12]
-                        else:
-                            print(f"[DEBUG] option[13]は存在しません (総数: {len(options)})")
-                    else:
-                        print(f"[DEBUG] 親select要素も見つかりません")
-                        
-                        all_selects = soup.find_all('select')
-                        print(f"[DEBUG] ページ内のselect要素数: {len(all_selects)}")
-                        for i, select in enumerate(all_selects):
-                            print(f"[DEBUG] select[{i}]: {select.attrs}")
-                            options = select.find_all('option')
-                            print(f"[DEBUG] select[{i}] options数: {len(options)}")
-                            if options:
-                                print(f"[DEBUG] select[{i}] 最初のoption: {options[0].get_text().strip()}")
-                                if len(options) >= 13:
-                                    print(f"[DEBUG] select[{i}] option[13]: {options[12].get_text().strip()}")
-                                print(f"[DEBUG] select[{i}] 最後のoption: {options[-1].get_text().strip()}")
-            
-            if target_option:
-                selected_period = target_option.get_text().strip()
-                if self.debug:
-                    print(f"[DEBUG] 選択された期間: {selected_period}")
-                return selected_period, selected_period
-            
-            if self.debug:
-                print("[DEBUG] Webスクレイピング失敗: フォールバック期間を使用")
-            print("Webページからの期間取得に失敗しました。現在の月をデフォルト期間として使用します。")
-            today = datetime.now()
-            first_day_of_month = today.replace(day=1)
-            if today.month == 12:
-                last_day_of_month = today.replace(year=today.year + 1, month=1, day=1) - timedelta(days=1)
-            else:
-                last_day_of_month = today.replace(month=today.month + 1, day=1) - timedelta(days=1)
-            
-            fallback_start = first_day_of_month.strftime("%Y-%m-%d")
-            fallback_end = last_day_of_month.strftime("%Y-%m-%d")
-            if self.debug:
-                print(f"[DEBUG] フォールバック期間（現在の月）: {fallback_start} から {fallback_end}")
-            return fallback_start, fallback_end
-            
-        except Exception as e:
-            if self.debug:
-                print(f"[DEBUG] 例外発生: {type(e).__name__}: {e}")
-                import traceback
-                print(f"[DEBUG] スタックトレース:")
-                traceback.print_exc()
-            print(f"期間取得中にエラーが発生しました: {e}")
-            print("現在の月をデフォルト期間として使用します。")
-            today = datetime.now()
-            first_day_of_month = today.replace(day=1)
-            if today.month == 12:
-                last_day_of_month = today.replace(year=today.year + 1, month=1, day=1) - timedelta(days=1)
-            else:
-                last_day_of_month = today.replace(month=today.month + 1, day=1) - timedelta(days=1)
-            
-            fallback_start = first_day_of_month.strftime("%Y-%m-%d")
-            fallback_end = last_day_of_month.strftime("%Y-%m-%d")
-            if self.debug:
-                print(f"[DEBUG] 例外後フォールバック期間（現在の月）: {fallback_start} から {fallback_end}")
-            return fallback_start, fallback_end
-
     def download_billing_data(self, date_from: str, date_to: str, output_format: str = 'csv') -> Optional[Tuple[bytes, str]]:
         """料金データをダウンロード"""
         try:
@@ -608,7 +479,7 @@ class FukuokaWaterDownloader:
             
             print("ファイル作成要求中...")
             if self.debug:
-                print(f"=== AUTHENTICATION DEBUG INFO ===")
+                print("=== AUTHENTICATION DEBUG INFO ===")
                 print(f"JWT Token (first 100 chars): {self.jwt_token[:100]}...")
                 print(f"User ID (dwKey): {self.user_id}")
                 print(f"Create URL: {create_url}")
@@ -762,9 +633,9 @@ class FukuokaWaterDownloader:
                 return False
             
             if not date_from and not date_to:
-                print("デフォルトの期間を取得中...")
-                date_from, date_to = self.get_default_date_range()
-                print(f"デフォルト期間を使用: {date_from} から {date_to}")
+                current_month = datetime.now().strftime("%Y-%m")
+                date_from = date_to = current_month
+                print(f"デフォルト期間を使用: {current_month}")
             else:
                 if date_from:
                     print(f"開始期間: {date_from}")
@@ -816,30 +687,30 @@ def main():
 
   python fukuoka_water_downloader_requests.py --debug --email user@example.com --password mypassword
   python fukuoka_water_downloader_requests.py -d -e user@example.com -p mypassword
-  
+
   python fukuoka_water_downloader_requests.py --debug-log debug.log --email user@example.com --password mypassword
         """
     )
     
-    parser.add_argument('--email', '-e', 
-                       help='ログイン用メールアドレス（環境変数 FUKUOKA_WATER_EMAIL でも指定可能）')
+    parser.add_argument('--email', '-e',
+                        help='ログイン用メールアドレス（環境変数 FUKUOKA_WATER_EMAIL でも指定可能）')
     parser.add_argument('--password', '-p',
-                       help='ログイン用パスワード（環境変数 FUKUOKA_WATER_PASSWORD でも指定可能）')
+                        help='ログイン用パスワード（環境変数 FUKUOKA_WATER_PASSWORD でも指定可能）')
     parser.add_argument('--date-from', '--from',
-                       help='開始期間（例: "令和5年1月", "2023-01", "2023年1月"）')
+                        help='開始期間（例: "令和5年1月", "2023-01", "2023年1月"）')
     parser.add_argument('--date-to', '--to',
-                       help='終了期間（例: "令和5年12月", "2023-12", "2023年12月"）')
+                        help='終了期間（例: "令和5年12月", "2023-12", "2023年12月"）')
     parser.add_argument('--format', '-f', default='csv',
-                       choices=['csv', 'pdf'],
-                       help='出力形式（デフォルト: csv）')
+                        choices=['csv', 'pdf'],
+                        help='出力形式（デフォルト: csv）')
     parser.add_argument('--output', '-o',
-                       help='出力ファイル名（指定しない場合は自動生成）')
+                        help='出力ファイル名（指定しない場合は自動生成）')
     parser.add_argument('--verbose', '-v', action='store_true',
-                       help='詳細な出力を表示')
+                        help='詳細な出力を表示')
     parser.add_argument('--debug', '-d', action='store_true',
-                       help='デバッグ情報を表示（HTTPリクエスト/レスポンスの詳細）')
-    parser.add_argument('--debug-log', 
-                       help='デバッグ情報をファイルに保存（ファイル名を指定）')
+                        help='デバッグ情報を表示（HTTPリクエスト/レスポンスの詳細）')
+    parser.add_argument('--debug-log',
+                        help='デバッグ情報をファイルに保存（ファイル名を指定）')
     
     args = parser.parse_args()
     
