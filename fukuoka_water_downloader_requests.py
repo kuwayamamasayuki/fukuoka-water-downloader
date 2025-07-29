@@ -467,42 +467,56 @@ class FukuokaWaterDownloader:
                 else:
                     print(f"[DEBUG] ページ内容確認: 'waterPrice'文字列が見つかりません")
             
-            css_selector = 'body > div > div:nth-child(3) > div:nth-child(2) > div > div > div:nth-child(2) > div:nth-child(3) > select'
+            target_option_selector = 'body > div > div:nth-child(3) > div:nth-child(2) > div > div > div:nth-child(2) > div:nth-child(3) > select > option:nth-child(13)'
             
             if self.debug:
-                print(f"[DEBUG] CSSセレクター検索: {css_selector}")
+                print(f"[DEBUG] CSSセレクター検索 (option[13]): {target_option_selector}")
             
-            dropdown = soup.select_one(css_selector)
+            target_option = soup.select_one(target_option_selector)
             
             if self.debug:
-                if dropdown:
-                    print(f"[DEBUG] ドロップダウン要素発見: {dropdown.name}")
-                    print(f"[DEBUG] ドロップダウン属性: {dropdown.attrs}")
+                if target_option:
+                    print(f"[DEBUG] 対象オプション要素発見: {target_option.name}")
+                    print(f"[DEBUG] オプション属性: {target_option.attrs}")
+                    print(f"[DEBUG] オプション内容: '{target_option.get_text().strip()}'")
                 else:
-                    print(f"[DEBUG] ドロップダウン要素が見つかりません")
+                    print(f"[DEBUG] 対象オプション要素が見つかりません")
                     
-                    all_selects = soup.find_all('select')
-                    print(f"[DEBUG] ページ内のselect要素数: {len(all_selects)}")
-                    for i, select in enumerate(all_selects):
-                        print(f"[DEBUG] select[{i}]: {select.attrs}")
-                        options = select.find_all('option')
-                        print(f"[DEBUG] select[{i}] options数: {len(options)}")
-                        if options:
-                            print(f"[DEBUG] select[{i}] 最初のoption: {options[0].get_text().strip()}")
-                            print(f"[DEBUG] select[{i}] 最後のoption: {options[-1].get_text().strip()}")
+                    parent_select_selector = 'body > div > div:nth-child(3) > div:nth-child(2) > div > div > div:nth-child(2) > div:nth-child(3) > select'
+                    parent_select = soup.select_one(parent_select_selector)
+                    
+                    if parent_select:
+                        print(f"[DEBUG] 親select要素は見つかりました")
+                        options = parent_select.find_all('option')
+                        print(f"[DEBUG] 親select内のoption数: {len(options)}")
+                        for i, option in enumerate(options, 1):
+                            print(f"[DEBUG] option[{i}]: '{option.get_text().strip()}'")
+                        
+                        if len(options) >= 13:
+                            print(f"[DEBUG] option[13]が存在します: '{options[12].get_text().strip()}'")
+                            target_option = options[12]
+                        else:
+                            print(f"[DEBUG] option[13]は存在しません (総数: {len(options)})")
+                    else:
+                        print(f"[DEBUG] 親select要素も見つかりません")
+                        
+                        all_selects = soup.find_all('select')
+                        print(f"[DEBUG] ページ内のselect要素数: {len(all_selects)}")
+                        for i, select in enumerate(all_selects):
+                            print(f"[DEBUG] select[{i}]: {select.attrs}")
+                            options = select.find_all('option')
+                            print(f"[DEBUG] select[{i}] options数: {len(options)}")
+                            if options:
+                                print(f"[DEBUG] select[{i}] 最初のoption: {options[0].get_text().strip()}")
+                                if len(options) >= 13:
+                                    print(f"[DEBUG] select[{i}] option[13]: {options[12].get_text().strip()}")
+                                print(f"[DEBUG] select[{i}] 最後のoption: {options[-1].get_text().strip()}")
             
-            if dropdown:
-                options = dropdown.find_all('option')
+            if target_option:
+                selected_period = target_option.get_text().strip()
                 if self.debug:
-                    print(f"[DEBUG] オプション数: {len(options)}")
-                    for i, option in enumerate(options):
-                        print(f"[DEBUG] option[{i}]: '{option.get_text().strip()}'")
-                
-                if options:
-                    latest_option = options[-1].get_text().strip()
-                    if self.debug:
-                        print(f"[DEBUG] 選択された期間: {latest_option}")
-                    return latest_option, latest_option
+                    print(f"[DEBUG] 選択された期間: {selected_period}")
+                return selected_period, selected_period
             
             if self.debug:
                 print("[DEBUG] Webスクレイピング失敗: フォールバック期間を使用")
