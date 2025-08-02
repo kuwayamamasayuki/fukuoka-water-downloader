@@ -281,7 +281,6 @@ python3 fukuoka_water_downloader_requests.py --date-from "2024-01" --date-to "20
 
 ## 注意事項
 
-- このスクリプトは教育目的で作成されています
 - 利用規約を遵守してください
 - 過度なアクセスは避けてください
 
