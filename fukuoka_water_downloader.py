@@ -522,17 +522,17 @@ class FukuokaWaterDownloader:
                 'Sec-Fetch-Site': 'same-site'
             }
             
-            print("ファイル作成要求中...")
-            if self.debug:
-                print("=== AUTHENTICATION DEBUG INFO ===")
-                print(f"JWT Token (first 100 chars): {self.jwt_token[:100]}...")
-                print(f"User ID (dwKey): {self.user_id}")
-                print(f"Create URL: {create_url}")
-                print(f"Request body: {json_body}")
-                print(f"Request body UTF-8 bytes: {len(json_bytes)}")
-                print(f"Request body hex: {json_bytes.hex()}")
-                print(f"Authorization header: {headers.get('Authorization', 'NOT SET')[:100]}...")
-                print("=" * 40)
+            self.print_output("ファイル作成要求中...")
+            if self.debug and not self.quiet:
+                self.print_output("=== AUTHENTICATION DEBUG INFO ===")
+                self.print_output(f"JWT Token (first 100 chars): {self.jwt_token[:100]}...")
+                self.print_output(f"User ID (dwKey): {self.user_id}")
+                self.print_output(f"Create URL: {create_url}")
+                self.print_output(f"Request body: {json_body}")
+                self.print_output(f"Request body UTF-8 bytes: {len(json_bytes)}")
+                self.print_output(f"Request body hex: {json_bytes.hex()}")
+                self.print_output(f"Authorization header: {headers.get('Authorization', 'NOT SET')[:100]}...")
+                self.print_output("=" * 40)
             
             self.log_request("POST", create_url, headers, create_data)
             response = self.session.post(create_url, data=json_bytes, headers=headers)
@@ -540,11 +540,12 @@ class FukuokaWaterDownloader:
             response.raise_for_status()
             
             if response.status_code != 200:
-                print(f"ファイル作成に失敗しました。ステータスコード: {response.status_code}")
+                self.print_output(f"ファイル作成に失敗しました。ステータスコード: {response.status_code}", is_error=True)
                 return None, None
             
             create_result = response.json()
-            print("ファイル作成結果:", create_result)
+            if self.debug and not self.quiet:
+                self.print_output(f"ファイル作成結果: {create_result}")
             
             if 'token' in create_result:
                 self.jwt_token = create_result['token']
@@ -590,18 +591,19 @@ class FukuokaWaterDownloader:
                 'Sec-Fetch-Site': 'same-site'
             }
             
-            print("ダウンロードURL取得中...")
+            self.print_output("ダウンロードURL取得中...")
             self.log_request("GET", download_url_endpoint, download_headers)
             response = self.session.get(download_url_endpoint, headers=download_headers)
             self.log_response(response)
             response.raise_for_status()
             
             if response.status_code != 200:
-                print(f"ダウンロードURL取得に失敗しました。ステータスコード: {response.status_code}")
+                self.print_output(f"ダウンロードURL取得に失敗しました。ステータスコード: {response.status_code}", is_error=True)
                 return None, None
             
             download_info = response.json()
-            print(f"ダウンロード情報: {download_info}")
+            if self.debug and not self.quiet:
+                self.print_output(f"ダウンロード情報: {download_info}")
             
             if 'token' in download_info:
                 self.jwt_token = download_info['token']
@@ -661,7 +663,10 @@ class FukuokaWaterDownloader:
                 with open(filename, 'wb') as f:
                     f.write(data)
             
-            self.print_output(f"データを {filename} に保存しました", is_filename=True)
+            if self.filename_only:
+                self.print_output(filename, is_filename=True)
+            else:
+                self.print_output(f"データを {filename} に保存しました", is_filename=True)
             
         except Exception as e:
             self.print_output(f"ファイル保存中にエラーが発生しました: {e}", is_error=True)
