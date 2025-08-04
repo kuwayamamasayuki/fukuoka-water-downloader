@@ -37,33 +37,33 @@ export FUKUOKA_WATER_EMAIL="your_email@example.com"
 export FUKUOKA_WATER_PASSWORD="your_password"
 
 # デフォルト設定で実行（CSV形式、現在の月）
-python3 fukuoka_water_downloader_requests.py
+python3 fukuoka_water_downloader.py
 
 # または直接認証情報を指定
-python3 fukuoka_water_downloader_requests.py --email your_email@example.com --password your_password
+python3 fukuoka_water_downloader.py --email your_email@example.com --password your_password
 ```
 
 #### 詳細オプション
 ```bash
 # PDF形式でダウンロード
-python3 fukuoka_water_downloader_requests.py --format pdf
+python3 fukuoka_water_downloader.py --format pdf
 
 # 期間範囲を指定
-python3 fukuoka_water_downloader_requests.py --date-from "2024-01" --date-to "2025-03" --format csv
+python3 fukuoka_water_downloader.py --date-from "2024-01" --date-to "2025-03" --format csv
 
 # カスタム出力ファイル名を指定
-python3 fukuoka_water_downloader_requests.py --output custom_filename.csv
+python3 fukuoka_water_downloader.py --output custom_filename.csv
 
 # デバッグモードで実行
-python3 fukuoka_water_downloader_requests.py --debug
+python3 fukuoka_water_downloader.py --debug
 
 # デバッグログをファイルに保存
-python3 fukuoka_water_downloader_requests.py --debug-log debug.log
+python3 fukuoka_water_downloader.py --debug-log debug.log
 ```
 
 #### ヘルプ表示
 ```bash
-python3 fukuoka_water_downloader_requests.py --help
+python3 fukuoka_water_downloader.py --help
 ```
 
 ### コマンドライン引数
@@ -89,28 +89,28 @@ python3 fukuoka_water_downloader_requests.py --help
 
 ```bash
 # 標準的なYYYY-MM形式（推奨）
-python3 fukuoka_water_downloader_requests.py --date-from "2024-01" --date-to "2024-12"
+python3 fukuoka_water_downloader.py --date-from "2024-01" --date-to "2024-12"
 
 # 日本語形式
-python3 fukuoka_water_downloader_requests.py --date-from "2024年1月"
+python3 fukuoka_water_downloader.py --date-from "2024年1月"
 
 # 西暦スラッシュ形式
-python3 fukuoka_water_downloader_requests.py --date-from "2024/1"
+python3 fukuoka_water_downloader.py --date-from "2024/1"
 
 # 西暦ドット形式  
-python3 fukuoka_water_downloader_requests.py --date-from "2024.1"
+python3 fukuoka_water_downloader.py --date-from "2024.1"
 
 # 令和年号省略形式（ドット）
-python3 fukuoka_water_downloader_requests.py --date-from "R6.1"
+python3 fukuoka_water_downloader.py --date-from "R6.1"
 
 # 令和年号省略形式（スラッシュ）
-python3 fukuoka_water_downloader_requests.py --date-from "R6/1"
+python3 fukuoka_water_downloader.py --date-from "R6/1"
 
 # 完全な日本語年号形式
-python3 fukuoka_water_downloader_requests.py --date-from "令和６年１月"
+python3 fukuoka_water_downloader.py --date-from "令和６年１月"
 
 # 混合形式（半角・全角数字）
-python3 fukuoka_water_downloader_requests.py --date-from "令和6年1月"
+python3 fukuoka_water_downloader.py --date-from "令和6年1月"
 ```
 
 #### 令和年号対応表

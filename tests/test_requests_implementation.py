@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Test script for fukuoka_water_downloader.py"""
 
-from fukuoka_water_downloader_requests import FukuokaWaterDownloader
+from fukuoka_water_downloader import FukuokaWaterDownloader
 
 def test_date_conversion():
     """Test date conversion functionality"""

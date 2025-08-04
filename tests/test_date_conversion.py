@@ -5,7 +5,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from fukuoka_water_downloader_requests import FukuokaWaterDownloader
+from fukuoka_water_downloader import FukuokaWaterDownloader
 
 def test_date_conversion():
     """Test date conversion functionality"""

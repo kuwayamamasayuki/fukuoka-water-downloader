@@ -6,7 +6,7 @@ Test script to verify current month default date range implementation
 def test_current_month_default():
     """Test that get_default_date_range returns current month when web scraping fails"""
     try:
-        from fukuoka_water_downloader_requests import FukuokaWaterDownloader
+        from fukuoka_water_downloader import FukuokaWaterDownloader
         from datetime import datetime
         
         downloader = FukuokaWaterDownloader(debug=True)

@@ -6,7 +6,7 @@ Test script to verify get_default_date_range integration
 def test_default_date_integration():
     """Test that get_default_date_range is called when no dates provided"""
     try:
-        from fukuoka_water_downloader_requests import FukuokaWaterDownloader
+        from fukuoka_water_downloader import FukuokaWaterDownloader
         
         downloader = FukuokaWaterDownloader(debug=True)
         

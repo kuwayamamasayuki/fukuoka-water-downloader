@@ -6,7 +6,7 @@ Test script to verify the corrected XPath selector implementation
 def test_corrected_selector():
     """Test the corrected selector without authentication (just method signature)"""
     try:
-        from fukuoka_water_downloader_requests import FukuokaWaterDownloader
+        from fukuoka_water_downloader import FukuokaWaterDownloader
         
         downloader = FukuokaWaterDownloader(debug=True)
         

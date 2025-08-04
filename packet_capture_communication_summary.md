@@ -232,7 +232,7 @@ sec-fetch-site: same-site
 ## 10. 参考情報
 
 ### 10.1 関連ファイル
-- `fukuoka_water_downloader_requests.py`: メイン実装
+- `fukuoka_water_downloader.py`: メイン実装
 - `test_date_conversion.py`: 日付変換テスト
 - `test_workflow.py`: ワークフローテスト
 - `debug_output*.log`: デバッグログ

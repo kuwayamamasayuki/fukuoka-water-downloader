@@ -6,7 +6,7 @@ Test script to verify simplified default date range implementation
 def test_simplified_default():
     """Test that the simplified current month logic works correctly"""
     try:
-        from fukuoka_water_downloader_requests import FukuokaWaterDownloader
+        from fukuoka_water_downloader import FukuokaWaterDownloader
         from datetime import datetime
         
         downloader = FukuokaWaterDownloader(debug=True)
