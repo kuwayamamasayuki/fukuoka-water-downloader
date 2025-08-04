@@ -6,7 +6,7 @@ Test script to verify the implementation changes
 def test_imports():
     """Test that all imports work correctly"""
     try:
-        from fukuoka_water_downloader_requests import FukuokaWaterDownloader
+        from fukuoka_water_downloader import FukuokaWaterDownloader
         from bs4 import BeautifulSoup
         from typing import Tuple, Optional
         print("✅ All imports successful")
@@ -18,7 +18,7 @@ def test_imports():
 def test_method_signatures():
     """Test that method signatures are correct"""
     try:
-        from fukuoka_water_downloader_requests import FukuokaWaterDownloader
+        from fukuoka_water_downloader import FukuokaWaterDownloader
         downloader = FukuokaWaterDownloader(debug=True)
         
         date_range = downloader.get_default_date_range()
