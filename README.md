@@ -1,6 +1,6 @@
 # 福岡市水道局アプリ - 水道料金データダウンローダー
 
-福岡市水道局のWebアプリケーション（https://www.suido-madoguchi-fukuoka.jp/#/login）から水道料金ファイルを自動的にダウンロードするPythonスクリプトです。
+[福岡市水道局アプリWeb版](https://www.suido-madoguchi-fukuoka.jp/#/login)から水道料金ファイルを自動的にダウンロードするPythonスクリプトです。
 
 家計簿アプリ／サービスとの連携などに利用するこをそ想定しています。
 
@@ -303,6 +303,10 @@ python3 tests/test_requests_implementation.py
 
 ## 更新履歴
 
+- v1.1.0:
+  - スクリプト名をfukuoka_water_downloader.pyへ変更した。
+  - --quietオプションを追加した。
+  - --filename-onlyオプションを追加した。
 - v1.0.0: Requests ベース実装への移行
   - Selenium から requests ライブラリへの完全移行
   - JWT 認証による自動ログイン
