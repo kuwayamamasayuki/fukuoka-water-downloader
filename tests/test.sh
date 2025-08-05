@@ -13,7 +13,7 @@ sleep 10
 
 # メールアドレスをオプションで指定
 echo "===========================\n\n\n"
-${PYTHON} ${SCRIPT} ${OPTIONS} --email masayuki.kuwayama@gmail.com
+${PYTHON} ${SCRIPT} ${OPTIONS} --email yourmailaddress@yourdomain
 sleep 10
 
 # パスワードをオプションで指定
@@ -23,7 +23,7 @@ sleep 10
 
 
 
-export FUKUOKA_WATER_EMAIL=masayuki.kuwayama@gmail.com
+export FUKUOKA_WATER_EMAIL=yourmailaddress@yourdomain
 export FUKUOKA_WATER_PASSWORD=XXX
 
 
