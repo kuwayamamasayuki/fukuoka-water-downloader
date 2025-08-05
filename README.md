@@ -309,7 +309,6 @@ python3 tests/test_requests_implementation.py
   - --filename-onlyオプションを追加した。
 - v1.0.0: Requests ベース実装への移行
   - Selenium から requests ライブラリへの完全移行
-  - JWT 認証による自動ログイン
   - CORS プリフライト対応
   - APIから返されるファイル名の自動使用
   - デフォルト日付範囲を現在の月に簡素化
