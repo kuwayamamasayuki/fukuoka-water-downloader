@@ -138,8 +138,16 @@ python3 fukuoka_water_downloader.py --date-from "令和６年１月" --date-to "
 python3 fukuoka_water_downloader.py --date-from "R6.1" --date-to "2024年12月"
 ```
 
-### 環境変数での認証情報設定
+### 認証情報の設定
 
+認証情報は以下の方法で設定できます（優先順位順）：
+
+#### 1. コマンドライン引数（最優先）
+```bash
+python3 fukuoka_water_downloader.py --email your_email@example.com --password your_password
+```
+
+#### 2. 環境変数
 ```bash
 # 認証情報を環境変数に設定
 export FUKUOKA_WATER_EMAIL="your_email@example.com"
@@ -149,10 +157,28 @@ export FUKUOKA_WATER_PASSWORD="your_password"
 python3 fukuoka_water_downloader.py --format pdf
 ```
 
+#### 3. .envファイル（最低優先度）
+```bash
+# .envファイルを作成
+cp .env.example .env
+
+# .envファイルを編集して認証情報を設定
+echo "FUKUOKA_WATER_EMAIL=your_email@example.com" > .env
+echo "FUKUOKA_WATER_PASSWORD=your_password" >> .env
+
+# .envファイルが自動的に読み込まれます
+python3 fukuoka_water_downloader.py --format pdf
+```
+
+#### 4. 対話的入力
+上記のいずれも設定されていない場合、実行時に入力を求められます。
+
+**注意**: より高い優先順位の設定が存在する場合、低い優先順位の設定は無視されます。
+
 ### Pythonスクリプトとしての使用
 
 ```python
-from fukuoka_water_downloader_requests import FukuokaWaterDownloader
+from fukuoka_water_downloader import FukuokaWaterDownloader
 
 # ダウンローダーのインスタンスを作成
 downloader = FukuokaWaterDownloader(debug=True)

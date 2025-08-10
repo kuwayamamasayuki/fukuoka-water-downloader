@@ -22,6 +22,7 @@ from typing import Optional, Dict, Any, Tuple
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+from dotenv import load_dotenv
 
 
 class FukuokaWaterDownloader:
@@ -373,21 +374,28 @@ class FukuokaWaterDownloader:
             return False
 
     def get_credentials(self, email: Optional[str] = None, password: Optional[str] = None) -> Tuple[str, str]:
-        """認証情報を取得"""
-        if not email:
-            email = os.getenv('FUKUOKA_WATER_EMAIL')
-        if not password:
-            password = os.getenv('FUKUOKA_WATER_PASSWORD')
+        """認証情報を取得
+        優先順位: 手動入力 → コマンドライン → 環境変数 → .envファイル
+        """
+        load_dotenv()
         
-        if not email:
-            email = input("メールアドレスを入力してください: ")
-        if not password:
-            password = getpass.getpass("パスワードを入力してください: ")
+        final_email = email
+        final_password = password
         
-        if not email or not password:
+        if not final_email:
+            final_email = os.getenv('FUKUOKA_WATER_EMAIL')
+        if not final_password:
+            final_password = os.getenv('FUKUOKA_WATER_PASSWORD')
+        
+        if not final_email:
+            final_email = input("メールアドレスを入力してください: ")
+        if not final_password:
+            final_password = getpass.getpass("パスワードを入力してください: ")
+        
+        if not final_email or not final_password:
             raise ValueError("メールアドレスとパスワードが必要です")
         
-        return email, password
+        return final_email, final_password
 
     def login(self, email: str, password: str) -> bool:
         """ログイン処理"""
