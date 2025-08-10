@@ -129,30 +129,56 @@ python3 fukuoka_water_downloader.py --date-from "令和6年1月"
 
 ```bash
 # 西暦形式と令和省略形式の組み合わせ
-python3 fukuoka_water_downloader_requests.py --date-from "2024/1" --date-to "R7.3"
+python3 fukuoka_water_downloader.py --date-from "2024/1" --date-to "R7.3"
 
 # 日本語形式と西暦形式の組み合わせ  
-python3 fukuoka_water_downloader_requests.py --date-from "令和６年１月" --date-to "2025年3月"
+python3 fukuoka_water_downloader.py --date-from "令和６年１月" --date-to "2025年3月"
 
 # 省略形式と標準形式の組み合わせ
-python3 fukuoka_water_downloader_requests.py --date-from "R6.1" --date-to "2024年12月"
+python3 fukuoka_water_downloader.py --date-from "R6.1" --date-to "2024年12月"
 ```
 
-### 環境変数での認証情報設定
+### 認証情報の設定
 
+認証情報は以下の方法で設定できます（優先順位順）：
+
+#### 1. コマンドライン引数（最優先）
+```bash
+python3 fukuoka_water_downloader.py --email your_email@example.com --password your_password
+```
+
+#### 2. 環境変数
 ```bash
 # 認証情報を環境変数に設定
 export FUKUOKA_WATER_EMAIL="your_email@example.com"
 export FUKUOKA_WATER_PASSWORD="your_password"
 
 # 設定後はメールアドレスとパスワードの指定不要
-python3 fukuoka_water_downloader_requests.py --format pdf
+python3 fukuoka_water_downloader.py --format pdf
 ```
+
+#### 3. .envファイル（最低優先度）
+```bash
+# .envファイルを作成
+cp .env.example .env
+
+# .envファイルを編集して認証情報を設定
+echo "FUKUOKA_WATER_EMAIL=your_email@example.com" > .env
+echo "FUKUOKA_WATER_PASSWORD=your_password" >> .env
+
+# .envファイルが自動的に読み込まれます
+python3 fukuoka_water_downloader.py --format pdf
+```
+
+#### 4. 対話的入力
+上記のいずれも設定されていない場合、実行時に入力を求められます。
+
+**注意**: より高い優先順位の設定が存在する場合、低い優先順位の設定は無視されます。
 
 ### Pythonスクリプトとしての使用
 
 ```python
-from fukuoka_water_downloader_requests import FukuokaWaterDownloader
+from fukuoka_water_downloader import FukuokaWaterDownloader
 
 # ダウンローダーのインスタンスを作成
 downloader = FukuokaWaterDownloader(debug=True)
@@ -229,17 +255,17 @@ else:
 4. **ファイルダウンロードが失敗する**
    - デバッグモードで詳細なログを確認してください
    ```bash
-   python3 fukuoka_water_downloader_requests.py --debug
+   python3 fukuoka_water_downloader.py --debug
    ```
 
 ### デバッグ方法
 
 ```bash
 # デバッグモードで実行
-python3 fukuoka_water_downloader_requests.py --debug
+python3 fukuoka_water_downloader.py --debug
 
 # デバッグログをファイルに保存
-python3 fukuoka_water_downloader_requests.py --debug-log debug.log
+python3 fukuoka_water_downloader.py --debug-log debug.log
 
 # ログファイルを確認
 tail -f debug.log
@@ -256,25 +282,25 @@ export FUKUOKA_WATER_EMAIL="your_email@example.com"
 export FUKUOKA_WATER_PASSWORD="your_password"
 
 # CSV形式で現在の月のファイルをダウンロード
-python3 fukuoka_water_downloader_requests.py --format csv
+python3 fukuoka_water_downloader.py --format csv
 
 # PDF形式でも保存
-python3 fukuoka_water_downloader_requests.py --format pdf
+python3 fukuoka_water_downloader.py --format pdf
 ```
 
 ### 特定期間のファイル取得
 ```bash
 # 2024年4月のファイルを取得
-python3 fukuoka_water_downloader_requests.py --date-from "2024-04" --date-to "2024-04" --format csv
+python3 fukuoka_water_downloader.py --date-from "2024-04" --date-to "2024-04" --format csv
 
 # 複数期間のファイルを順次取得
 for month in "2024-01" "2024-02" "2024-03"; do
-    python3 fukuoka_water_downloader_requests.py --date-from "$month" --date-to "$month" --format csv
+    python3 fukuoka_water_downloader.py --date-from "$month" --date-to "$month" --format csv
     sleep 5  # サーバー負荷軽減のため待機
 done
 
 # 期間範囲でのダウンロード
-python3 fukuoka_water_downloader_requests.py --date-from "2024-01" --date-to "2024-12" --format csv
+python3 fukuoka_water_downloader.py --date-from "2024-01" --date-to "2024-12" --format csv
 ```
 
 ## ライセンス
