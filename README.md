@@ -140,24 +140,9 @@ python3 fukuoka_water_downloader.py --date-from "R6.1" --date-to "2024年12月"
 
 ### 認証情報の設定
 
-認証情報は以下の方法で設定できます（優先順位順）：
+認証情報は以下の方法で設定できます（セキュリティの観点から推奨順に記載）：
 
-#### 1. コマンドライン引数（最優先）
-```bash
-python3 fukuoka_water_downloader.py --email your_email@example.com --password your_password
-```
-
-#### 2. 環境変数
-```bash
-# 認証情報を環境変数に設定
-export FUKUOKA_WATER_EMAIL="your_email@example.com"
-export FUKUOKA_WATER_PASSWORD="your_password"
-
-# 設定後はメールアドレスとパスワードの指定不要
-python3 fukuoka_water_downloader.py --format pdf
-```
-
-#### 3. .envファイル（最低優先度）
+#### 1. .envファイル（推奨 - 自動化にも対応）
 ```bash
 # .envファイルを作成
 cp .env.example .env
@@ -170,10 +155,28 @@ echo "FUKUOKA_WATER_PASSWORD=your_password" >> .env
 python3 fukuoka_water_downloader.py --format pdf
 ```
 
-#### 4. 対話的入力
-上記のいずれも設定されていない場合、実行時に入力を求められます。
+#### 2. 環境変数
+```bash
+# 認証情報を環境変数に設定
+export FUKUOKA_WATER_EMAIL="your_email@example.com"
+export FUKUOKA_WATER_PASSWORD="your_password"
 
-**注意**: より高い優先順位の設定が存在する場合、低い優先順位の設定は無視されます。
+# 設定後はメールアドレスとパスワードの指定不要
+python3 fukuoka_water_downloader.py --format pdf
+```
+
+#### 3. 対話的入力（最も安全）
+上記のいずれも設定されていない場合、実行時に入力を求められます。パスワードは画面に表示されません。
+
+#### 4. コマンドライン引数
+
+> **セキュリティ警告**: `--password`引数で指定したパスワードはシェル履歴（`~/.bash_history`等）や`ps`コマンドの出力に残ります。上記1〜3の方法を推奨します。
+
+```bash
+python3 fukuoka_water_downloader.py --email your_email@example.com --password your_password
+```
+
+**注意**: 複数の方法で設定されている場合、コマンドライン引数 > 環境変数/.envファイル > 対話入力の優先順位で適用されます。
 
 ### Pythonスクリプトとしての使用
 
