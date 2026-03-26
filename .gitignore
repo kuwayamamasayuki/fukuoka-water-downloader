@@ -1,0 +1,33 @@
+# 認証情報・環境変数ファイル
+.env
+
+# デバッグログファイル（JWTトークン等の機密情報を含む可能性あり）
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# 仮想環境
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ダウンロードされたデータファイル
+riyourireki_*.csv
+riyourireki_*.pdf
