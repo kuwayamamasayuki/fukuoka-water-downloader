@@ -692,6 +692,16 @@ class FukuokaWaterDownloader:
                     self.print_output(error_msg)
             return None, None
 
+    @staticmethod
+    def format_file_size(size_bytes: int) -> str:
+        """バイト数を人間が読みやすい形式に変換"""
+        if size_bytes < 1024:
+            return f"{size_bytes} B"
+        elif size_bytes < 1024 * 1024:
+            return f"{size_bytes / 1024:.1f} KB"
+        else:
+            return f"{size_bytes / (1024 * 1024):.1f} MB"
+
     def save_data(self, data: bytes, filename: str, output_format: str):
         """データをファイルに保存"""
         try:
@@ -706,7 +716,8 @@ class FukuokaWaterDownloader:
             if self.filename_only:
                 self.print_output(filename, is_filename=True)
             else:
-                self.print_output(f"データを {filename} に保存しました", is_filename=True)
+                size_str = self.format_file_size(len(data))
+                self.print_output(f"データを {filename} ({size_str}) に保存しました", is_filename=True)
             
         except Exception as e:
             self.print_output(f"ファイル保存中にエラーが発生しました: {e}", is_error=True)
