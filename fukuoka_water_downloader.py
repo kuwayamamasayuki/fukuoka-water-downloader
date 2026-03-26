@@ -328,26 +328,30 @@ class FukuokaWaterDownloader:
             self.log_response(response)
             
             if response.status_code != 200:
-                self.print_output(f"CORS プリフライト失敗: {response.status_code}", is_error=True)
+                self.print_output("サーバーとの通信に失敗しました。ネットワーク接続を確認してください。", is_error=True)
+                self.print_verbose(f"技術詳細: CORS プリフライト失敗 ステータスコード: {response.status_code}")
                 return False
-            
+
             allowed_methods = response.headers.get('Access-Control-Allow-Methods', '')
             allowed_headers = response.headers.get('Access-Control-Allow-Headers', '')
-            
+
             if method.upper() not in allowed_methods.upper() and '*' not in allowed_methods:
-                self.print_output(f"サーバーが {method} メソッドを許可していません: {allowed_methods}", is_error=True)
+                self.print_output("サーバーとの通信に失敗しました。サーバー側の設定に問題がある可能性があります。", is_error=True)
+                self.print_verbose(f"技術詳細: サーバーが {method} メソッドを許可していません: {allowed_methods}")
                 return False
-            
+
             for header in request_headers:
                 if header.lower() not in allowed_headers.lower() and '*' not in allowed_headers:
-                    self.print_output(f"サーバーが {header} ヘッダーを許可していません: {allowed_headers}", is_error=True)
+                    self.print_output("サーバーとの通信に失敗しました。サーバー側の設定に問題がある可能性があります。", is_error=True)
+                    self.print_verbose(f"技術詳細: サーバーが {header} ヘッダーを許可していません: {allowed_headers}")
                     return False
             
             self.print_verbose("CORS プリフライト成功")
             return True
             
         except Exception as e:
-            self.print_output(f"CORS プリフライトエラー: {e}", is_error=True)
+            self.print_output("サーバーとの通信中にエラーが発生しました。ネットワーク接続を確認してください。", is_error=True)
+            self.print_verbose(f"技術詳細: CORS プリフライトエラー: {e}")
             return False
 
     def get_user_data(self) -> bool:
@@ -362,7 +366,7 @@ class FukuokaWaterDownloader:
             userdata_url = f"{self.api_base_url}/user/userdata"
             
             if not self.send_cors_preflight(userdata_url, 'GET', ['authorization']):
-                self.print_output("CORS プリフライトに失敗しました。処理を中止します。", is_error=True)
+                self.print_output("サーバーとの通信準備に失敗しました。処理を中止します。", is_error=True)
                 return False
             
             headers = {
@@ -532,7 +536,7 @@ class FukuokaWaterDownloader:
             create_url = f"{self.api_base_url}/user/file/create/payment/log/{self.user_id}"
             
             if not self.send_cors_preflight(create_url, 'POST', ['authorization', 'content-type']):
-                self.print_output("CORS プリフライトに失敗しました。処理を中止します。", is_error=True)
+                self.print_output("サーバーとの通信準備に失敗しました。処理を中止します。", is_error=True)
                 return None, None
             
             format_type = "2" if output_format.lower() == 'csv' else "1"  # CSV=2, PDF=1
@@ -612,7 +616,7 @@ class FukuokaWaterDownloader:
             download_url_endpoint = f"{self.api_base_url}/user/file/download/paylog/{self.user_id}/{filename}"
             
             if not self.send_cors_preflight(download_url_endpoint, 'GET', ['authorization']):
-                self.print_output("CORS プリフライトに失敗しました。処理を中止します。", is_error=True)
+                self.print_output("サーバーとの通信準備に失敗しました。処理を中止します。", is_error=True)
                 return None, None
             
             download_headers = {
