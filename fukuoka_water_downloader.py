@@ -26,8 +26,10 @@ from dotenv import load_dotenv
 
 class FukuokaWaterDownloader:
     """福岡市水道局アプリからデータをダウンロードするクラス"""
-    
-    def __init__(self, debug: bool = False, debug_log_file: str = None, 
+
+    DEFAULT_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0'
+
+    def __init__(self, debug: bool = False, debug_log_file: str = None,
                  quiet: bool = False, filename_only: bool = False):
         self.session = requests.Session()
         self.base_url = "https://www.suido-madoguchi-fukuoka.jp"
@@ -56,7 +58,7 @@ class FukuokaWaterDownloader:
         self.session.verify = True
 
         self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0'
+            'User-Agent': self.DEFAULT_USER_AGENT
         })
 
     def convert_date_to_kenyin_format(self, date_str: str) -> str:
@@ -276,7 +278,7 @@ class FukuokaWaterDownloader:
                 'Access-Control-Request-Headers': ','.join(request_headers),
                 'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
                 'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
+                'User-Agent': self.DEFAULT_USER_AGENT,
                 'accept': '*/*',
                 'accept-language': 'ja,en-US;q=0.7,en;q=0.3',
                 'accept-encoding': 'gzip, deflate, br, zstd',
@@ -340,7 +342,7 @@ class FukuokaWaterDownloader:
                 'te': 'trailers',
                 'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
                 'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
+                'User-Agent': self.DEFAULT_USER_AGENT,
                 'Sec-Fetch-Dest': 'empty',
                 'Sec-Fetch-Mode': 'cors',
                 'Sec-Fetch-Site': 'same-site'
@@ -523,7 +525,7 @@ class FukuokaWaterDownloader:
                 'te': 'trailers',
                 'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
                 'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
+                'User-Agent': self.DEFAULT_USER_AGENT,
                 'Sec-Fetch-Dest': 'empty',
                 'Sec-Fetch-Mode': 'cors',
                 'Sec-Fetch-Site': 'same-site'
@@ -590,7 +592,7 @@ class FukuokaWaterDownloader:
                 'te': 'trailers',
                 'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
                 'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
+                'User-Agent': self.DEFAULT_USER_AGENT,
                 'Sec-Fetch-Dest': 'empty',
                 'Sec-Fetch-Mode': 'cors',
                 'Sec-Fetch-Site': 'same-site'
