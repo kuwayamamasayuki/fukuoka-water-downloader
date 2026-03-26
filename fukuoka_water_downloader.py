@@ -172,6 +172,15 @@ class FukuokaWaterDownloader:
         else:
             logging.basicConfig(level=logging.DEBUG, format='%(message)s')
 
+    @staticmethod
+    def sanitize_filename(filename: str) -> str:
+        """ファイル名をサニタイズしてパストラバーサルを防止"""
+        filename = filename.replace('\\', '/')
+        filename = os.path.basename(filename)
+        if not filename:
+            raise ValueError("ファイル名が空です")
+        return filename
+
     def mask_email(self, email: str) -> str:
         """メールアドレスの一部をマスク"""
         if '@' in email:
@@ -554,7 +563,7 @@ class FukuokaWaterDownloader:
                 return None, None
             
             if 'data' in create_result and 'fileName' in create_result['data']:
-                filename = create_result['data']['fileName']
+                filename = self.sanitize_filename(create_result['data']['fileName'])
             else:
                 import time
                 timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -646,6 +655,7 @@ class FukuokaWaterDownloader:
     def save_data(self, data: bytes, filename: str, output_format: str):
         """データをファイルに保存"""
         try:
+            filename = self.sanitize_filename(filename)
             if output_format.lower() == 'csv':
                 with open(filename, 'wb') as f:
                     f.write(data)
