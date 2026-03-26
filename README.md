@@ -51,7 +51,10 @@ python3 fukuoka_water_downloader.py --date-from "2024-01" --date-to "2025-03" --
 # カスタム出力ファイル名を指定
 python3 fukuoka_water_downloader.py --output custom_filename.csv
 
-# デバッグモードで実行
+# 詳細モードで実行（ステップごとの進捗を表示）
+python3 fukuoka_water_downloader.py --verbose
+
+# デバッグモードで実行（詳細モード + HTTP通信の詳細を表示）
 python3 fukuoka_water_downloader.py --debug
 
 # デバッグログをファイルに保存
@@ -73,8 +76,8 @@ python3 fukuoka_water_downloader.py --help
 | `--date-to` | `--to` | ダウンロード終了期間（YYYY-MM形式） | 現在の月 |
 | `--format` | `-f` | 出力フォーマット（csv/pdf） | csv |
 | `--output` | `-o` | 出力ファイル名 | APIから返されるファイル名 |
-| `--verbose` | `-v` | 詳細な出力を表示 | False |
-| `--debug` | `-d` | デバッグ情報を表示 | False |
+| `--verbose` | `-v` | 詳細な進捗を表示（ステップごとの状況） | False |
+| `--debug` | `-d` | デバッグ情報を表示（`--verbose` の内容 + HTTP通信の詳細） | False |
 | `--debug-log` | | デバッグ情報をファイルに保存 | なし |
 | `--help` | `-h` | ヘルプを表示 | |
 
@@ -211,7 +214,8 @@ else:
 
 ### FukuokaWaterDownloaderクラスのパラメータ
 
-- `debug` (bool): デバッグモードで実行するかどうか（デフォルト: False）
+- `verbose` (bool): 詳細な進捗を表示するかどうか（デフォルト: False）
+- `debug` (bool): デバッグモードで実行するかどうか（デフォルト: False、Trueにするとverboseも自動的に有効）
 - `debug_log_file` (str): デバッグログファイルのパス（デフォルト: None）
 
 ### runメソッドのパラメータ
@@ -261,7 +265,10 @@ else:
 ### デバッグ方法
 
 ```bash
-# デバッグモードで実行
+# まずは詳細モードでステップごとの進捗を確認
+python3 fukuoka_water_downloader.py --verbose
+
+# HTTP通信の詳細が必要な場合はデバッグモードで実行
 python3 fukuoka_water_downloader.py --debug
 
 # デバッグログをファイルに保存

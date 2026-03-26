@@ -30,13 +30,15 @@ class FukuokaWaterDownloader:
     DEFAULT_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0'
 
     def __init__(self, debug: bool = False, debug_log_file: str = None,
-                 quiet: bool = False, filename_only: bool = False):
+                 quiet: bool = False, filename_only: bool = False,
+                 verbose: bool = False):
         self.session = requests.Session()
         self.base_url = "https://www.suido-madoguchi-fukuoka.jp"
         self.api_base_url = "https://api.suido-madoguchi-fukuoka.jp"
         self.jwt_token = None
         self.user_id = None
         self.debug = debug
+        self.verbose = verbose or debug
         self.debug_log_file = debug_log_file
         self.quiet = quiet
         self.filename_only = filename_only
@@ -160,6 +162,11 @@ class FukuokaWaterDownloader:
         elif self.filename_only and is_filename:
             print(message)
         elif not self.quiet and not self.filename_only:
+            print(message)
+
+    def print_verbose(self, message: str):
+        """verbose/debugモード時のみ出力（ステップごとの詳細進捗）"""
+        if self.verbose and not self.quiet and not self.filename_only:
             print(message)
 
     def setup_debug_logging(self):
@@ -289,7 +296,7 @@ class FukuokaWaterDownloader:
                 'Sec-Fetch-Site': 'same-site'
             }
             
-            self.print_output(f"CORS プリフライト送信中: {method} {url}")
+            self.print_verbose(f"CORS プリフライト送信中: {method} {url}")
             self.log_request("OPTIONS", url, preflight_headers)
             
             response = self.session.options(url, headers=preflight_headers)
@@ -311,7 +318,7 @@ class FukuokaWaterDownloader:
                     self.print_output(f"サーバーが {header} ヘッダーを許可していません: {allowed_headers}", is_error=True)
                     return False
             
-            self.print_output("CORS プリフライト成功")
+            self.print_verbose("CORS プリフライト成功")
             return True
             
         except Exception as e:
@@ -325,7 +332,7 @@ class FukuokaWaterDownloader:
                 self.print_output("JWTトークンが必要です", is_error=True)
                 return False
             
-            self.print_output("ユーザーデータを取得中...")
+            self.print_verbose("ユーザーデータを取得中...")
             
             userdata_url = f"{self.api_base_url}/user/userdata"
             
@@ -368,7 +375,7 @@ class FukuokaWaterDownloader:
                 
                 if 'data' in response_data and 'dwKey' in response_data['data']:
                     self.user_id = response_data['data']['dwKey']
-                    self.print_output(f"dwKeyを取得しました: {self.user_id}")
+                    self.print_verbose(f"dwKeyを取得しました: {self.user_id}")
                     if self.debug:
                         debug_msg = f"ユーザーデータ取得成功: dwKey={self.user_id}"
                         if self.debug_log_file:
@@ -421,13 +428,13 @@ class FukuokaWaterDownloader:
     def login(self, email: str, password: str) -> bool:
         """ログイン処理"""
         try:
-            self.print_output("ログインページにアクセス中...")
+            self.print_verbose("ログインページにアクセス中...")
             
             login_url = f"{self.base_url}/#/login"
             response = self.session.get(login_url)
             response.raise_for_status()
             
-            self.print_output("ログイン試行中...")
+            self.print_verbose("ログイン試行中...")
             
             api_login_url = f"{self.api_base_url}/user/auth/login"
             
@@ -495,7 +502,7 @@ class FukuokaWaterDownloader:
             if not date_from and not date_to:
                 ken_ym_from = ken_ym_to = self.convert_date_to_kenyin_format("")
             
-            self.print_output(f"期間: {ken_ym_from} から {ken_ym_to}")
+            self.print_verbose(f"期間: {ken_ym_from} から {ken_ym_to}")
             
             create_url = f"{self.api_base_url}/user/file/create/payment/log/{self.user_id}"
             
@@ -531,7 +538,7 @@ class FukuokaWaterDownloader:
                 'Sec-Fetch-Site': 'same-site'
             }
             
-            self.print_output("ファイル作成要求中...")
+            self.print_verbose("ファイル作成要求中...")
             if self.debug and not self.quiet:
                 self.print_output("=== AUTHENTICATION DEBUG INFO ===")
                 self.print_output(f"User ID (dwKey): {self.user_id}")
@@ -598,7 +605,7 @@ class FukuokaWaterDownloader:
                 'Sec-Fetch-Site': 'same-site'
             }
             
-            self.print_output("ダウンロードURL取得中...")
+            self.print_verbose("ダウンロードURL取得中...")
             self.log_request("GET", download_url_endpoint, download_headers)
             response = self.session.get(download_url_endpoint, headers=download_headers)
             self.log_response(response)
@@ -633,17 +640,17 @@ class FukuokaWaterDownloader:
             else:
                 signed_url = f"https://download.suido-madoguchi-fukuoka.jp/paylog/{self.user_id}/{filename}"
             
-            self.print_output("実際のファイルをダウンロード中...")
+            self.print_verbose("実際のファイルをダウンロード中...")
             self.log_request("GET", signed_url)
             response = self.session.get(signed_url)
             self.log_response(response)
             response.raise_for_status()
             
             if response.status_code == 200:
-                self.print_output(f"データのダウンロードに成功しました（サイズ: {len(response.content)} bytes）")
-                
+                self.print_verbose(f"データのダウンロードに成功しました（サイズ: {len(response.content)} bytes）")
+
                 content_type = response.headers.get('content-type', '')
-                self.print_output(f"Content-Type: {content_type}")
+                self.print_verbose(f"Content-Type: {content_type}")
                 
                 return response.content, filename
             else:
@@ -750,7 +757,10 @@ def main():
   # 出力形式指定
   python fukuoka_water_downloader.py --format csv --output billing_data.csv
 
-  # デバッグモード
+  # 詳細モード（ステップごとの進捗を表示）
+  python fukuoka_water_downloader.py --verbose
+
+  # デバッグモード（--verbose の内容に加え、HTTP通信の詳細を表示）
   python fukuoka_water_downloader.py --debug
   python fukuoka_water_downloader.py --debug-log debug.log
 
@@ -778,9 +788,9 @@ def main():
     parser.add_argument('--output', '-o',
                         help='出力ファイル名（指定しない場合は自動生成）')
     parser.add_argument('--verbose', '-v', action='store_true',
-                        help='詳細な出力を表示')
+                        help='詳細な進捗を表示（ステップごとの状況）')
     parser.add_argument('--debug', '-d', action='store_true',
-                        help='デバッグ情報を表示（HTTPリクエスト/レスポンスの詳細）')
+                        help='デバッグ情報を表示（--verbose の内容に加え、HTTPリクエスト/レスポンスの詳細）')
     parser.add_argument('--debug-log',
                         help='デバッグ情報をファイルに保存（ファイル名を指定）')
     parser.add_argument('--quiet', '-q', action='store_true',
@@ -799,11 +809,13 @@ def main():
         print("エラー: --quiet と --filename-only は同時に指定できません", file=sys.stderr)
         sys.exit(1)
     
-    debug_enabled = args.verbose or args.debug or args.debug_log
+    debug_enabled = args.debug or bool(args.debug_log)
+    verbose_enabled = args.verbose or debug_enabled
     debug_log_file = args.debug_log if args.debug_log else None
-    
-    downloader = FukuokaWaterDownloader(debug=debug_enabled, debug_log_file=debug_log_file, 
-                                        quiet=args.quiet, filename_only=args.filename_only)
+
+    downloader = FukuokaWaterDownloader(debug=debug_enabled, debug_log_file=debug_log_file,
+                                        quiet=args.quiet, filename_only=args.filename_only,
+                                        verbose=verbose_enabled)
     success = downloader.run(
         email=args.email,
         password=args.password,
