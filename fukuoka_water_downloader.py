@@ -802,7 +802,7 @@ def main():
   python fukuoka_water_downloader.py --debug
   python fukuoka_water_downloader.py --debug-log debug.log
 
-  # 静寂モード
+  # 静寂モード（--quiet と --filename-only は同時に指定できません）
   python fukuoka_water_downloader.py --quiet
   python fukuoka_water_downloader.py --filename-only --format csv
 
@@ -832,9 +832,9 @@ def main():
     parser.add_argument('--debug-log',
                         help='デバッグ情報をファイルに保存（ファイル名を指定）')
     parser.add_argument('--quiet', '-q', action='store_true',
-                        help='エラー以外の出力を抑制（静寂モード）')
+                        help='エラー以外の出力を抑制（静寂モード、--filename-only と同時指定不可）')
     parser.add_argument('--filename-only', action='store_true',
-                        help='保存されたファイル名のみを出力')
+                        help='保存されたファイル名のみを出力（--quiet と同時指定不可）')
     
     args = parser.parse_args()
     
