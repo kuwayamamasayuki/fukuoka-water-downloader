@@ -79,6 +79,8 @@ python3 fukuoka_water_downloader.py --help
 | `--verbose` | `-v` | 詳細な進捗を表示（ステップごとの状況） | False |
 | `--debug` | `-d` | デバッグ情報を表示（`--verbose` の内容 + HTTP通信の詳細） | False |
 | `--debug-log` | | デバッグ情報をファイルに保存 | なし |
+| `--quiet` | `-q` | エラー以外の出力を抑制（`--filename-only` と同時指定不可） | False |
+| `--filename-only` | | 保存されたファイル名のみを出力（`--quiet` と同時指定不可） | False |
 | `--help` | `-h` | ヘルプを表示 | |
 
 ### 期間指定の詳細
