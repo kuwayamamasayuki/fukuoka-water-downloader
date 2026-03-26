@@ -717,6 +717,9 @@ class FukuokaWaterDownloader:
         except Exception as e:
             self.print_output(f"処理中にエラーが発生しました: {e}", is_error=True)
             return False
+        finally:
+            self.jwt_token = None
+            self.user_id = None
 
 
 def main():
