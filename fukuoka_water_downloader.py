@@ -308,8 +308,8 @@ class FukuokaWaterDownloader:
             preflight_headers = {
                 'Access-Control-Request-Method': method,
                 'Access-Control-Request-Headers': ','.join(request_headers),
-                'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
-                'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
+                'Origin': self.base_url,
+                'Referer': f'{self.base_url}/',
                 'User-Agent': self.DEFAULT_USER_AGENT,
                 'accept': '*/*',
                 'accept-language': 'ja,en-US;q=0.7,en;q=0.3',
@@ -376,8 +376,8 @@ class FukuokaWaterDownloader:
                 'accept-encoding': 'gzip, deflate, br, zstd',
                 'priority': 'u=0',
                 'te': 'trailers',
-                'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
-                'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
+                'Origin': self.base_url,
+                'Referer': f'{self.base_url}/',
                 'User-Agent': self.DEFAULT_USER_AGENT,
                 'Sec-Fetch-Dest': 'empty',
                 'Sec-Fetch-Mode': 'cors',
@@ -559,8 +559,8 @@ class FukuokaWaterDownloader:
                 'accept-encoding': 'gzip, deflate, br, zstd',
                 'priority': 'u=0',
                 'te': 'trailers',
-                'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
-                'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
+                'Origin': self.base_url,
+                'Referer': f'{self.base_url}/',
                 'User-Agent': self.DEFAULT_USER_AGENT,
                 'Sec-Fetch-Dest': 'empty',
                 'Sec-Fetch-Mode': 'cors',
@@ -626,8 +626,8 @@ class FukuokaWaterDownloader:
                 'accept-encoding': 'gzip, deflate, br, zstd',
                 'priority': 'u=0',
                 'te': 'trailers',
-                'Origin': 'https://www.suido-madoguchi-fukuoka.jp',
-                'Referer': 'https://www.suido-madoguchi-fukuoka.jp/',
+                'Origin': self.base_url,
+                'Referer': f'{self.base_url}/',
                 'User-Agent': self.DEFAULT_USER_AGENT,
                 'Sec-Fetch-Dest': 'empty',
                 'Sec-Fetch-Mode': 'cors',
@@ -667,7 +667,8 @@ class FukuokaWaterDownloader:
             if 'downloadUrl' in download_info:
                 signed_url = download_info['downloadUrl']
             else:
-                signed_url = f"https://download.suido-madoguchi-fukuoka.jp/paylog/{self.user_id}/{filename}"
+                download_domain = self.base_url.replace('://www.', '://download.')
+                signed_url = f"{download_domain}/paylog/{self.user_id}/{filename}"
             
             self.print_verbose("実際のファイルをダウンロード中...")
             self.log_request("GET", signed_url)
