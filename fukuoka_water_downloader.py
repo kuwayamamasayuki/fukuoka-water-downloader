@@ -171,6 +171,10 @@ class FukuokaWaterDownloader:
                     logging.StreamHandler()
                 ]
             )
+            try:
+                os.chmod(self.debug_log_file, 0o600)
+            except OSError:
+                pass
         else:
             logging.basicConfig(level=logging.DEBUG, format='%(message)s')
 
