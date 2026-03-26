@@ -738,14 +738,19 @@ class FukuokaWaterDownloader:
                 return False
             
             if not date_from and not date_to:
-                current_month = datetime.now().strftime("%Y-%m")
+                now = datetime.now()
+                current_month = now.strftime("%Y-%m")
                 date_from = date_to = current_month
-                self.print_output(f"デフォルト期間を使用: {current_month}")
+                self.print_output(f"対象期間: {now.year}年{now.month}月（デフォルト: 当月）")
             else:
-                if date_from:
-                    self.print_output(f"開始期間: {date_from}")
-                if date_to:
-                    self.print_output(f"終了期間: {date_to}")
+                if date_from and date_to and date_from == date_to:
+                    self.print_output(f"対象期間: {date_from}")
+                elif date_from and date_to:
+                    self.print_output(f"対象期間: {date_from} ～ {date_to}")
+                elif date_from:
+                    self.print_output(f"対象期間: {date_from} ～")
+                elif date_to:
+                    self.print_output(f"対象期間: ～ {date_to}")
 
             if date_from and date_to:
                 try:
