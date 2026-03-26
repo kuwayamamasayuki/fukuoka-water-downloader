@@ -432,7 +432,7 @@ class FukuokaWaterDownloader:
 
     def get_credentials(self, email: Optional[str] = None, password: Optional[str] = None) -> Tuple[str, str]:
         """認証情報を取得
-        優先順位: CLI引数 → FUKUOKA_WATER_* → WATER_* → .envファイル → 対話入力
+        優先順位: CLI引数 → 環境変数(WATER_*) → .envファイル → 対話入力
         """
         load_dotenv()
 
@@ -440,9 +440,9 @@ class FukuokaWaterDownloader:
         final_password = password
 
         if not final_email:
-            final_email = os.getenv('FUKUOKA_WATER_EMAIL') or os.getenv('WATER_EMAIL')
+            final_email = os.getenv('WATER_EMAIL')
         if not final_password:
-            final_password = os.getenv('FUKUOKA_WATER_PASSWORD') or os.getenv('WATER_PASSWORD')
+            final_password = os.getenv('WATER_PASSWORD')
 
         if not final_email:
             final_email = input("メールアドレスを入力してください: ")
@@ -804,9 +804,9 @@ def main():
   cp .env.example .env  # .envを編集して認証情報を設定
   python fukuoka_water_downloader.py
 
-  # 環境変数（FUKUOKA_WATER_* または WATER_* が使えます）
-  export FUKUOKA_WATER_EMAIL=user@example.com
-  export FUKUOKA_WATER_PASSWORD=mypassword
+  # 環境変数
+  export WATER_EMAIL=user@example.com
+  export WATER_PASSWORD=mypassword
   python fukuoka_water_downloader.py
 
   # 期間指定
@@ -838,9 +838,9 @@ def main():
     )
     
     parser.add_argument('--email', '-e',
-                        help='ログイン用メールアドレス（環境変数 FUKUOKA_WATER_EMAIL または WATER_EMAIL でも指定可能）')
+                        help='ログイン用メールアドレス（環境変数 WATER_EMAIL でも指定可能）')
     parser.add_argument('--password', '-p',
-                        help='ログイン用パスワード（非推奨: シェル履歴に残ります。環境変数 FUKUOKA_WATER_PASSWORD / WATER_PASSWORD または .envファイルを推奨）')
+                        help='ログイン用パスワード（非推奨: シェル履歴に残ります。環境変数 WATER_PASSWORD または .envファイルを推奨）')
     parser.add_argument('--date-from', '--from',
                         help='開始期間（例: "令和5年1月", "2023-01", "2023年1月"）')
     parser.add_argument('--date-to', '--to',

@@ -23,8 +23,8 @@ sleep 10
 
 
 
-export FUKUOKA_WATER_EMAIL=yourmailaddress@yourdomain
-export FUKUOKA_WATER_PASSWORD=XXX
+export WATER_EMAIL=yourmailaddress@yourdomain
+export WATER_PASSWORD=XXX
 
 
 # 開始月をオプションで指定
