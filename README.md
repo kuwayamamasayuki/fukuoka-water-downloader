@@ -70,8 +70,8 @@ python3 fukuoka_water_downloader.py --help
 
 | 引数 | 短縮形 | 説明 | デフォルト |
 |------|--------|------|------------|
-| `--email` | `-e` | ログイン用メールアドレス | 環境変数 `FUKUOKA_WATER_EMAIL` |
-| `--password` | `-p` | ログイン用パスワード | 環境変数 `FUKUOKA_WATER_PASSWORD` |
+| `--email` | `-e` | ログイン用メールアドレス | 環境変数 `WATER_EMAIL` |
+| `--password` | `-p` | ログイン用パスワード | 環境変数 `WATER_PASSWORD` |
 | `--date-from` | `--from` | ダウンロード開始期間（YYYY-MM形式） | 現在の月 |
 | `--date-to` | `--to` | ダウンロード終了期間（YYYY-MM形式） | 現在の月 |
 | `--format` | `-f` | 出力フォーマット（csv/pdf） | csv |
@@ -150,8 +150,8 @@ python3 fukuoka_water_downloader.py --date-from "R6.1" --date-to "2024年12月"
 cp .env.example .env
 
 # .envファイルを編集して認証情報を設定
-echo "FUKUOKA_WATER_EMAIL=your_email@example.com" > .env
-echo "FUKUOKA_WATER_PASSWORD=your_password" >> .env
+echo "WATER_EMAIL=your_email@example.com" > .env
+echo "WATER_PASSWORD=your_password" >> .env
 
 # .envファイルが自動的に読み込まれます
 python3 fukuoka_water_downloader.py --format pdf
@@ -160,8 +160,8 @@ python3 fukuoka_water_downloader.py --format pdf
 #### 2. 環境変数
 ```bash
 # 認証情報を環境変数に設定
-export FUKUOKA_WATER_EMAIL="your_email@example.com"
-export FUKUOKA_WATER_PASSWORD="your_password"
+export WATER_EMAIL="your_email@example.com"
+export WATER_PASSWORD="your_password"
 
 # 設定後はメールアドレスとパスワードの指定不要
 python3 fukuoka_water_downloader.py --format pdf
@@ -304,8 +304,8 @@ tail -f debug.log
 #!/bin/bash
 # monthly_download.sh
 
-export FUKUOKA_WATER_EMAIL="your_email@example.com"
-export FUKUOKA_WATER_PASSWORD="your_password"
+export WATER_EMAIL="your_email@example.com"
+export WATER_PASSWORD="your_password"
 
 # CSV形式で現在の月のファイルをダウンロード
 python3 fukuoka_water_downloader.py --format csv

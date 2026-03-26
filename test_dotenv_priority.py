@@ -13,8 +13,8 @@ def test_dotenv_priority():
     """Test credential loading priority: manual input → command line → env vars → .env file"""
     
     with tempfile.NamedTemporaryFile(mode='w', suffix='.env', delete=False) as f:
-        f.write("FUKUOKA_WATER_EMAIL=dotenv@example.com\n")
-        f.write("FUKUOKA_WATER_PASSWORD=dotenv_password\n")
+        f.write("WATER_EMAIL=dotenv@example.com\n")
+        f.write("WATER_PASSWORD=dotenv_password\n")
         env_file = f.name
     
     try:
@@ -33,15 +33,15 @@ def test_dotenv_priority():
         print("✓ Manual input works correctly")
         
         print("\n2. Testing environment variables priority:")
-        os.environ['FUKUOKA_WATER_EMAIL'] = 'env@example.com'
-        os.environ['FUKUOKA_WATER_PASSWORD'] = 'env_password'
+        os.environ['WATER_EMAIL'] = 'env@example.com'
+        os.environ['WATER_PASSWORD'] = 'env_password'
         email, password = downloader.get_credentials()
         assert email == "env@example.com" and password == "env_password"
         print("✓ Environment variables work correctly")
         
         print("\n3. Testing .env file priority:")
-        del os.environ['FUKUOKA_WATER_EMAIL']
-        del os.environ['FUKUOKA_WATER_PASSWORD']
+        del os.environ['WATER_EMAIL']
+        del os.environ['WATER_PASSWORD']
         
         with patch('builtins.input', return_value=''), \
              patch('getpass.getpass', return_value=''):
@@ -71,7 +71,7 @@ def test_dotenv_priority():
             os.remove(os.path.join(env_dir, '.env'))
         except:
             pass
-        for key in ['FUKUOKA_WATER_EMAIL', 'FUKUOKA_WATER_PASSWORD']:
+        for key in ['WATER_EMAIL', 'WATER_PASSWORD']:
             if key in os.environ:
                 del os.environ[key]
 
