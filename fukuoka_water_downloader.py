@@ -8,7 +8,6 @@ This script automatically downloads billing data from Fukuoka City Water Bureau 
 """
 
 import argparse
-import base64
 import csv
 import getpass
 import json
@@ -194,7 +193,10 @@ class FukuokaWaterDownloader:
         if headers:
             message += "Headers:\n"
             for key, value in headers.items():
-                message += f"  {key}: {value}\n"
+                if key.lower() == 'authorization':
+                    message += f"  {key}: [MASKED]\n"
+                else:
+                    message += f"  {key}: {value}\n"
         
         if data:
             message += "Request Body:\n"
@@ -231,6 +233,8 @@ class FukuokaWaterDownloader:
                 json_data = response.json()
                 masked_data = json_data.copy() if isinstance(json_data, dict) else json_data
                 if isinstance(masked_data, dict):
+                    if 'token' in masked_data:
+                        masked_data['token'] = '[MASKED]'
                     if 'data' in masked_data and isinstance(masked_data['data'], dict):
                         if 'mailAddress' in masked_data['data']:
                             masked_data['data']['mailAddress'] = '[MASKED_EMAIL]'
@@ -436,26 +440,6 @@ class FukuokaWaterDownloader:
                     self.jwt_token = response_data['token']
                     self.print_output("ログインに成功しました")
                     
-                    try:
-                        payload = self.jwt_token.split('.')[1]
-                        payload += '=' * (4 - len(payload) % 4)
-                        decoded = base64.b64decode(payload)
-                        jwt_data = json.loads(decoded)
-                        if self.debug:
-                            masked_jwt_data = jwt_data.copy()
-                            if self.debug_log_file:
-                                logging.debug(f"JWT Payload: {json.dumps(masked_jwt_data, indent=2, ensure_ascii=False)}")
-                            else:
-                                self.print_output(f"JWT Payload: {json.dumps(masked_jwt_data, indent=2, ensure_ascii=False)}")
-                    except Exception as e:
-                        self.print_output(f"JWT解析エラー: {e}", is_error=True)
-                        if self.debug:
-                            error_msg = f"JWT解析詳細エラー: {str(e)}"
-                            if self.debug_log_file:
-                                logging.debug(error_msg)
-                            else:
-                                self.print_output(error_msg)
-                    
                     if not self.get_user_data():
                         self.print_output("ユーザーデータの取得に失敗しました", is_error=True)
                         return False
@@ -533,13 +517,11 @@ class FukuokaWaterDownloader:
             self.print_output("ファイル作成要求中...")
             if self.debug and not self.quiet:
                 self.print_output("=== AUTHENTICATION DEBUG INFO ===")
-                self.print_output(f"JWT Token (first 100 chars): {self.jwt_token[:100]}...")
                 self.print_output(f"User ID (dwKey): {self.user_id}")
                 self.print_output(f"Create URL: {create_url}")
                 self.print_output(f"Request body: {json_body}")
                 self.print_output(f"Request body UTF-8 bytes: {len(json_bytes)}")
                 self.print_output(f"Request body hex: {json_bytes.hex()}")
-                self.print_output(f"Authorization header: {headers.get('Authorization', 'NOT SET')[:100]}...")
                 self.print_output("=" * 40)
             
             self.log_request("POST", create_url, headers, create_data)
