@@ -70,8 +70,8 @@ python3 fukuoka_water_downloader.py --help
 
 | 引数 | 短縮形 | 説明 | デフォルト |
 |------|--------|------|------------|
-| `--email` | `-e` | ログイン用メールアドレス | 環境変数 `FUKUOKA_WATER_EMAIL` |
-| `--password` | `-p` | ログイン用パスワード | 環境変数 `FUKUOKA_WATER_PASSWORD` |
+| `--email` | `-e` | ログイン用メールアドレス | 環境変数 `FUKUOKA_WATER_EMAIL` または `WATER_EMAIL` |
+| `--password` | `-p` | ログイン用パスワード | 環境変数 `FUKUOKA_WATER_PASSWORD` または `WATER_PASSWORD` |
 | `--date-from` | `--from` | ダウンロード開始期間（YYYY-MM形式） | 現在の月 |
 | `--date-to` | `--to` | ダウンロード終了期間（YYYY-MM形式） | 現在の月 |
 | `--format` | `-f` | 出力フォーマット（csv/pdf） | csv |
