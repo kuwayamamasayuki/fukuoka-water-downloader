@@ -32,15 +32,12 @@ pip install -r requirements.txt
 
 #### 基本的な使用方法
 ```bash
-# 環境変数で認証情報を設定
-export FUKUOKA_WATER_EMAIL="your_email@example.com"
-export FUKUOKA_WATER_PASSWORD="your_password"
+# .envファイルに認証情報を設定（初回のみ）
+cp .env.example .env
+# .envを編集してメールアドレスとパスワードを設定
 
 # デフォルト設定で実行（CSV形式、現在の月）
 python3 fukuoka_water_downloader.py
-
-# または直接認証情報を指定
-python3 fukuoka_water_downloader.py --email your_email@example.com --password your_password
 ```
 
 #### 詳細オプション
