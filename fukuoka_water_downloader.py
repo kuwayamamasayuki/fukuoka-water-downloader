@@ -731,35 +731,43 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 使用例:
+  # 対話入力（最も安全 - パスワードは画面に表示されません）
   python fukuoka_water_downloader.py
 
-  python fukuoka_water_downloader.py --email user@example.com --password mypassword
+  # .envファイル（推奨 - 自動化にも対応）
+  cp .env.example .env  # .envを編集して認証情報を設定
+  python fukuoka_water_downloader.py
 
+  # 環境変数
   export FUKUOKA_WATER_EMAIL=user@example.com
   export FUKUOKA_WATER_PASSWORD=mypassword
   python fukuoka_water_downloader.py
 
+  # 期間指定
   python fukuoka_water_downloader.py --date-from "令和5年1月" --date-to "令和5年12月"
-
   python fukuoka_water_downloader.py --date-from "2023-01" --date-to "2023-12"
-  python fukuoka_water_downloader.py --date-from "2023年1月" --date-to "2023年12月"
 
+  # 出力形式指定
   python fukuoka_water_downloader.py --format csv --output billing_data.csv
 
-  python fukuoka_water_downloader.py --debug --email user@example.com --password mypassword
-  python fukuoka_water_downloader.py -d -e user@example.com -p mypassword
+  # デバッグモード
+  python fukuoka_water_downloader.py --debug
+  python fukuoka_water_downloader.py --debug-log debug.log
 
-  python fukuoka_water_downloader.py --debug-log debug.log --email user@example.com --password mypassword
-  
-  python fukuoka_water_downloader.py --quiet --email user@example.com --password mypassword
+  # 静寂モード
+  python fukuoka_water_downloader.py --quiet
   python fukuoka_water_downloader.py --filename-only --format csv
+
+セキュリティに関する注意:
+  --password引数はシェル履歴やpsコマンドの出力に残るため、
+  .envファイル、環境変数、または対話入力の使用を推奨します。
         """
     )
     
     parser.add_argument('--email', '-e',
                         help='ログイン用メールアドレス（環境変数 FUKUOKA_WATER_EMAIL でも指定可能）')
     parser.add_argument('--password', '-p',
-                        help='ログイン用パスワード（環境変数 FUKUOKA_WATER_PASSWORD でも指定可能）')
+                        help='ログイン用パスワード（非推奨: シェル履歴に残ります。環境変数 FUKUOKA_WATER_PASSWORD または .envファイルを推奨）')
     parser.add_argument('--date-from', '--from',
                         help='開始期間（例: "令和5年1月", "2023-01", "2023年1月"）')
     parser.add_argument('--date-to', '--to',
@@ -782,6 +790,11 @@ def main():
     
     args = parser.parse_args()
     
+    if args.password:
+        print("警告: --password引数はシェル履歴やpsコマンドの出力に残る可能性があります。"
+              "環境変数、.envファイル、または対話入力の使用を推奨します。",
+              file=sys.stderr)
+
     if args.quiet and args.filename_only:
         print("エラー: --quiet と --filename-only は同時に指定できません", file=sys.stderr)
         sys.exit(1)
