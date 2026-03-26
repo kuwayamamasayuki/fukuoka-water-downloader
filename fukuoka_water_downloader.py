@@ -155,6 +155,31 @@ class FukuokaWaterDownloader:
         
         raise ValueError(f"サポートされていない日付形式です: {date_str}")
 
+    @staticmethod
+    def parse_date_to_year_month(date_str: str) -> Tuple[int, int]:
+        """日付文字列を西暦の(year, month)タプルに変換（バリデーション用）"""
+        if not date_str:
+            today = datetime.now()
+            return (today.year, today.month)
+
+        reiwa_match = re.match(r'令和(\d+)年(\d+)月', date_str)
+        if reiwa_match:
+            return (int(reiwa_match.group(1)) + 2018, int(reiwa_match.group(2)))
+
+        heisei_match = re.match(r'平成(\d+)年(\d+)月', date_str)
+        if heisei_match:
+            return (int(heisei_match.group(1)) + 1988, int(heisei_match.group(2)))
+
+        western_match = re.match(r'(\d{4})[-年/\.](\d{1,2})', date_str)
+        if western_match:
+            return (int(western_match.group(1)), int(western_match.group(2)))
+
+        r_notation_match = re.match(r'[Rr](\d{1,2})[/\.](\d{1,2})', date_str)
+        if r_notation_match:
+            return (int(r_notation_match.group(1)) + 2018, int(r_notation_match.group(2)))
+
+        raise ValueError(f"サポートされていない日付形式です: {date_str}")
+
     def print_output(self, message: str, is_error: bool = False, is_filename: bool = False):
         """制御された出力（quiet/filename-onlyモードに対応）"""
         if is_error:
@@ -706,7 +731,20 @@ class FukuokaWaterDownloader:
                     self.print_output(f"開始期間: {date_from}")
                 if date_to:
                     self.print_output(f"終了期間: {date_to}")
-            
+
+            if date_from and date_to:
+                try:
+                    from_ym = self.parse_date_to_year_month(date_from)
+                    to_ym = self.parse_date_to_year_month(date_to)
+                    if from_ym > to_ym:
+                        self.print_output(
+                            f"エラー: 開始期間({date_from})が終了期間({date_to})より後になっています",
+                            is_error=True)
+                        return False
+                except ValueError as e:
+                    self.print_output(f"日付の解析に失敗しました: {e}", is_error=True)
+                    return False
+
             result = self.download_billing_data(date_from, date_to, output_format)
             
             if not result or not result[0]:
